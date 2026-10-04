@@ -18,6 +18,7 @@ app: build
 	@mkdir -p $(APP_MACOS) $(APP_RESOURCES)
 	@cp $(BUILD_DIR)/$(BINARY_NAME) $(APP_MACOS)/$(BINARY_NAME)
 	@cp assets/Info.plist $(APP_CONTENTS)/Info.plist
+	@cp assets/AppIcon.icns $(APP_RESOURCES)/AppIcon.icns
 	@echo "Built $(APP_BUNDLE)"
 
 run:
