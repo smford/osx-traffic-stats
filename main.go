@@ -24,6 +24,8 @@ var (
 	mToggleGraph  *systray.MenuItem
 
 	appVersion = "1.0.0"
+
+	refreshRateSignal = make(chan struct{}, 1)
 )
 
 const (
@@ -66,6 +68,9 @@ func onReady() {
 		setUnitMode(savedState.UnitMode)
 		setStyleMode(savedState.StyleMode)
 		setMenuBarIconMode(savedState.MenuBarIconMode)
+		if savedState.RefreshRate > 0 {
+			setRefreshRate(savedState.RefreshRate)
+		}
 		setDataCap(savedState.DataCapBytes)
 	}
 
@@ -121,6 +126,12 @@ func onReady() {
 	mBarIconNone := mDisplayMenu.AddSubMenuItemCheckbox("Icon: Text Only", "Show bandwidth text only", getMenuBarIconMode() == MenuBarTextOnly)
 	mBarIconBoth := mDisplayMenu.AddSubMenuItemCheckbox("Icon: Graph + Text", "Show real-time sparkline icon and text", getMenuBarIconMode() == MenuBarGraphAndText)
 	mBarIconOnly := mDisplayMenu.AddSubMenuItemCheckbox("Icon: Graph Only", "Show real-time sparkline icon without text", getMenuBarIconMode() == MenuBarGraphOnly)
+
+	mRefreshMenu := systray.AddMenuItem("Refresh Rate", "Configure polling frequency and battery saver")
+	mRefreshFast := mRefreshMenu.AddSubMenuItemCheckbox("Fast (0.5s) - Ultra Smooth", "Update every 500ms", getRefreshRate() == RefreshFast)
+	mRefreshNormal := mRefreshMenu.AddSubMenuItemCheckbox("Normal (1.0s) - Recommended", "Update every 1 second", getRefreshRate() == RefreshNormal)
+	mRefreshBattery := mRefreshMenu.AddSubMenuItemCheckbox("Battery Saver (2.0s)", "Update every 2 seconds", getRefreshRate() == RefreshBattery)
+	mRefreshEco := mRefreshMenu.AddSubMenuItemCheckbox("Eco / Low Power (5.0s)", "Update every 5 seconds", getRefreshRate() == RefreshEco)
 
 	systray.AddSeparator()
 
@@ -335,6 +346,66 @@ func onReady() {
 	}()
 
 	go func() {
+		for range mRefreshFast.ClickedCh {
+			setRefreshRate(RefreshFast)
+			mRefreshFast.Check()
+			mRefreshNormal.Uncheck()
+			mRefreshBattery.Uncheck()
+			mRefreshEco.Uncheck()
+			select {
+			case refreshRateSignal <- struct{}{}:
+			default:
+			}
+			persistCurrentState()
+		}
+	}()
+
+	go func() {
+		for range mRefreshNormal.ClickedCh {
+			setRefreshRate(RefreshNormal)
+			mRefreshFast.Uncheck()
+			mRefreshNormal.Check()
+			mRefreshBattery.Uncheck()
+			mRefreshEco.Uncheck()
+			select {
+			case refreshRateSignal <- struct{}{}:
+			default:
+			}
+			persistCurrentState()
+		}
+	}()
+
+	go func() {
+		for range mRefreshBattery.ClickedCh {
+			setRefreshRate(RefreshBattery)
+			mRefreshFast.Uncheck()
+			mRefreshNormal.Uncheck()
+			mRefreshBattery.Check()
+			mRefreshEco.Uncheck()
+			select {
+			case refreshRateSignal <- struct{}{}:
+			default:
+			}
+			persistCurrentState()
+		}
+	}()
+
+	go func() {
+		for range mRefreshEco.ClickedCh {
+			setRefreshRate(RefreshEco)
+			mRefreshFast.Uncheck()
+			mRefreshNormal.Uncheck()
+			mRefreshBattery.Uncheck()
+			mRefreshEco.Check()
+			select {
+			case refreshRateSignal <- struct{}{}:
+			default:
+			}
+			persistCurrentState()
+		}
+	}()
+
+	go func() {
 		for range mAbout.ClickedCh {
 			showAboutBox()
 		}
@@ -354,83 +425,102 @@ func monitorTraffic() {
 	var lastInterface string
 	var upHistory, downHistory []uint64
 	var tickCount int
+	var lastTick time.Time
 	const sparklineWidth = 10
 
-	ticker := time.NewTicker(1 * time.Second)
+	ticker := time.NewTicker(getRefreshDuration())
 	defer ticker.Stop()
 
-	for range ticker.C {
-		currentIface := getSelectedInterface()
-		if currentIface != lastInterface {
-			initialized = false
-			lastInterface = currentIface
-		}
-
-		currSent, currRecv, err := fetchTrafficBytes(currentIface)
-		if err != nil {
+	for {
+		select {
+		case <-refreshRateSignal:
+			ticker.Reset(getRefreshDuration())
 			continue
-		}
-
-		if initialized {
-			var upBytes, downBytes uint64
-			if currSent >= prevSent {
-				upBytes = currSent - prevSent
-			}
-			if currRecv >= prevRecv {
-				downBytes = currRecv - prevRecv
+		case now := <-ticker.C:
+			currentIface := getSelectedInterface()
+			if currentIface != lastInterface {
+				initialized = false
+				lastInterface = currentIface
 			}
 
-			totalUp := sessionSent.Add(upBytes)
-			totalDown := sessionRecv.Add(downBytes)
-			allTimeUp := totalSent.Add(upBytes)
-			allTimeDown := totalRecv.Add(downBytes)
-			checkDataCap(totalUp + totalDown)
-
-			upSpeed := formatSpeedDynamic(upBytes, false)
-			downSpeed := formatSpeedDynamic(downBytes, false)
-			upSpeedFixed := formatSpeedDynamic(upBytes, true)
-			downSpeedFixed := formatSpeedDynamic(downBytes, true)
-
-			upHistory = append(upHistory, upBytes)
-			if len(upHistory) > sparklineWidth {
-				upHistory = upHistory[len(upHistory)-sparklineWidth:]
-			}
-			downHistory = append(downHistory, downBytes)
-			if len(downHistory) > sparklineWidth {
-				downHistory = downHistory[len(downHistory)-sparklineWidth:]
+			currSent, currRecv, err := fetchTrafficBytes(currentIface)
+			if err != nil {
+				continue
 			}
 
-			upSpark := renderSparkline(upHistory, sparklineWidth)
-			downSpark := renderSparkline(downHistory, sparklineWidth)
+			if initialized {
+				var upDelta, downDelta uint64
+				if currSent >= prevSent {
+					upDelta = currSent - prevSent
+				}
+				if currRecv >= prevRecv {
+					downDelta = currRecv - prevRecv
+				}
 
-			updateGraph(upBytes, downBytes)
-			updateMenuBarGraph(upBytes, downBytes, getMenuBarIconMode())
+				elapsed := 1.0
+				if !lastTick.IsZero() {
+					elapsed = now.Sub(lastTick).Seconds()
+					if elapsed <= 0 {
+						elapsed = 1.0
+					}
+				}
 
-			// Updates the text right next to the macOS clock with fixed-width layout
-			if getMenuBarIconMode() == MenuBarGraphOnly {
-				systray.SetTitle("")
+				upBytesPerSec := CalculateSpeedPerSecond(upDelta, elapsed)
+				downBytesPerSec := CalculateSpeedPerSecond(downDelta, elapsed)
+
+				totalUp := sessionSent.Add(upDelta)
+				totalDown := sessionRecv.Add(downDelta)
+				allTimeUp := totalSent.Add(upDelta)
+				allTimeDown := totalRecv.Add(downDelta)
+				checkDataCap(totalUp + totalDown)
+
+				upSpeed := formatSpeedDynamic(upBytesPerSec, false)
+				downSpeed := formatSpeedDynamic(downBytesPerSec, false)
+				upSpeedFixed := formatSpeedDynamic(upBytesPerSec, true)
+				downSpeedFixed := formatSpeedDynamic(downBytesPerSec, true)
+
+				upHistory = append(upHistory, upBytesPerSec)
+				if len(upHistory) > sparklineWidth {
+					upHistory = upHistory[len(upHistory)-sparklineWidth:]
+				}
+				downHistory = append(downHistory, downBytesPerSec)
+				if len(downHistory) > sparklineWidth {
+					downHistory = downHistory[len(downHistory)-sparklineWidth:]
+				}
+
+				upSpark := renderSparkline(upHistory, sparklineWidth)
+				downSpark := renderSparkline(downHistory, sparklineWidth)
+
+				updateGraph(upBytesPerSec, downBytesPerSec)
+				updateMenuBarGraph(upBytesPerSec, downBytesPerSec, getMenuBarIconMode())
+
+				// Updates the text right next to the macOS clock with fixed-width layout
+				if getMenuBarIconMode() == MenuBarGraphOnly {
+					systray.SetTitle("")
+				} else {
+					systray.SetTitle(fmt.Sprintf("↑ %s  ↓ %s", upSpeedFixed, downSpeedFixed))
+				}
+				systray.SetTooltip(fmt.Sprintf("Bandwidth Monitor\n↑ %s [%s] (Session: %s, Total: %s)\n↓ %s [%s] (Session: %s, Total: %s)", upSpeed, upSpark, formatBytes(totalUp), formatBytes(allTimeUp), downSpeed, downSpark, formatBytes(totalDown), formatBytes(allTimeDown)))
+
+				mUploadRate.SetTitle(fmt.Sprintf("Upload:   ↑ %-8s  [%s]", upSpeed, upSpark))
+				mDownloadRate.SetTitle(fmt.Sprintf("Download: ↓ %-8s  [%s]", downSpeed, downSpark))
+				mSessionUp.SetTitle(fmt.Sprintf("Session Upload:   %s", formatBytes(totalUp)))
+				mSessionDown.SetTitle(fmt.Sprintf("Session Download: %s", formatBytes(totalDown)))
+				mTotalUp.SetTitle(fmt.Sprintf("Lifetime Upload:  %s", formatBytes(allTimeUp)))
+				mTotalDown.SetTitle(fmt.Sprintf("Lifetime Download: %s", formatBytes(allTimeDown)))
+
+				tickCount++
+				if tickCount%15 == 0 {
+					persistCurrentState()
+				}
 			} else {
-				systray.SetTitle(fmt.Sprintf("↑ %s  ↓ %s", upSpeedFixed, downSpeedFixed))
+				initialized = true
 			}
-			systray.SetTooltip(fmt.Sprintf("Bandwidth Monitor\n↑ %s [%s] (Session: %s, Total: %s)\n↓ %s [%s] (Session: %s, Total: %s)", upSpeed, upSpark, formatBytes(totalUp), formatBytes(allTimeUp), downSpeed, downSpark, formatBytes(totalDown), formatBytes(allTimeDown)))
 
-			mUploadRate.SetTitle(fmt.Sprintf("Upload:   ↑ %-8s  [%s]", upSpeed, upSpark))
-			mDownloadRate.SetTitle(fmt.Sprintf("Download: ↓ %-8s  [%s]", downSpeed, downSpark))
-			mSessionUp.SetTitle(fmt.Sprintf("Session Upload:   %s", formatBytes(totalUp)))
-			mSessionDown.SetTitle(fmt.Sprintf("Session Download: %s", formatBytes(totalDown)))
-			mTotalUp.SetTitle(fmt.Sprintf("Lifetime Upload:  %s", formatBytes(allTimeUp)))
-			mTotalDown.SetTitle(fmt.Sprintf("Lifetime Download: %s", formatBytes(allTimeDown)))
-
-			tickCount++
-			if tickCount%15 == 0 {
-				persistCurrentState()
-			}
-		} else {
-			initialized = true
+			lastTick = now
+			prevSent = currSent
+			prevRecv = currRecv
 		}
-
-		prevSent = currSent
-		prevRecv = currRecv
 	}
 }
 

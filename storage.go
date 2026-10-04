@@ -16,6 +16,7 @@ type AppState struct {
 	UnitMode          UnitMode        `json:"unit_mode"`
 	StyleMode         StyleMode       `json:"style_mode"`
 	MenuBarIconMode   MenuBarIconMode `json:"menubar_icon_mode,omitempty"`
+	RefreshRate       RefreshRate     `json:"refresh_rate,omitempty"`
 	DataCapBytes      uint64          `json:"data_cap_bytes"`
 }
 
@@ -74,6 +75,7 @@ func persistCurrentState() {
 		UnitMode:          getUnitMode(),
 		StyleMode:         getStyleMode(),
 		MenuBarIconMode:   getMenuBarIconMode(),
+		RefreshRate:       getRefreshRate(),
 		DataCapBytes:      getDataCap(),
 	}
 	_ = saveAppState(state)
