@@ -86,8 +86,9 @@ A [`Makefile`](file:///Users/asc/git/osx-traffic-stats/Makefile) is provided for
 
 | Target | Description |
 |---|---|
-| `make build` | Builds the standalone binary to `bin/osx-traffic-stats` |
+| `make build` | Builds the standalone binary to `bin/osx-traffic-stats` with injected SemVer |
 | `make app` | Builds the macOS application bundle `bin/OSXTrafficStats.app` with `LSUIElement` |
+| `make package` | Builds universal (Apple Silicon & Intel) release `.zip` and `.tar.gz` |
 | `make run` | Runs the application directly using `go run` |
 | `make run-app` | Builds and launches `bin/OSXTrafficStats.app` using `open` |
 | `make install` | Builds and installs `OSXTrafficStats.app` to `~/Applications` |

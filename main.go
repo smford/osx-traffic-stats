@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"sync/atomic"
 	"time"
@@ -21,11 +22,12 @@ var (
 	mTotalUp      *systray.MenuItem
 	mTotalDown    *systray.MenuItem
 	mToggleGraph  *systray.MenuItem
+
+	appVersion = "1.0.0"
 )
 
 const (
 	appName      = "OSX Traffic Stats"
-	appVersion   = "1.0.0"
 	appCopyright = "Copyright © 2026 smford"
 	appLicense   = "MIT License"
 	githubURL    = "https://github.com/smford/osx-traffic-stats"
@@ -36,6 +38,14 @@ func aboutMessage() string {
 }
 
 func main() {
+	showVersion := flag.Bool("version", false, "Print version and exit")
+	showVersionShort := flag.Bool("v", false, "Print version and exit")
+	flag.Parse()
+	if *showVersion || *showVersionShort {
+		fmt.Printf("%s %s\n", appName, appVersion)
+		return
+	}
+
 	systray.Run(onReady, onExit)
 }
 
