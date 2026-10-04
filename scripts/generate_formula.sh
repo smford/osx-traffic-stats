@@ -92,6 +92,10 @@ cask "osx-traffic-stats" do
 
   app "OSXTrafficStats.app"
 
+  postflight_steps do
+    run "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "/Applications/OSXTrafficStats.app"], must_succeed: false
+  end
+
   zap trash: [
     "~/Library/Application Support/com.smford.osx-traffic-stats",
     "~/Library/LaunchAgents/com.smford.osx-traffic-stats.plist",
