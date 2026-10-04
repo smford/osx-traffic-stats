@@ -50,22 +50,7 @@ brew uninstall --cask osx-traffic-stats
 
 ---
 
-### Method 2: Homebrew Formula (Standalone CLI Binary)
-
-If you prefer only the standalone command-line binary installed to your `PATH` (`/opt/homebrew/bin`):
-
-```bash
-brew install --formula smford/tap/osx-traffic-stats
-```
-
-To run in the background from your terminal:
-```bash
-osx-traffic-stats &
-```
-
----
-
-### Method 3: Pre-built GitHub Releases
+### Method 2: Pre-built GitHub Releases
 
 Download universal binaries (Apple Silicon & Intel) or the macOS application bundle (`OSXTrafficStats-v*.zip`) directly from [GitHub Releases](https://github.com/smford/osx-traffic-stats/releases):
 1. Download `OSXTrafficStats-v*-macOS.zip`.
@@ -74,7 +59,7 @@ Download universal binaries (Apple Silicon & Intel) or the macOS application bun
 
 ---
 
-### Method 4: Building from Source
+### Method 3: Building from Source
 
 **Prerequisites:** macOS (Darwin), Go 1.21+, and Xcode Command Line Tools (`xcode-select --install`).
 
