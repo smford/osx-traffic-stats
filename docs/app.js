@@ -1,14 +1,13 @@
 /**
  * osx-traffic-stats — Interactive Landing Page Script
- * Geometric connected dots & lines canvas, terminal emulation, live data simulation, and clipboard.
+ * Geometric connected dots & lines canvas, screenshot showcase tabs, and clipboard.
  */
 
 document.addEventListener('DOMContentLoaded', () => {
   initBackgroundCanvas();
-  initTerminalTabs();
+  initShowcaseTabs();
   initInstallPill();
   initMiniCopyButtons();
-  startLiveMetricsSimulation();
 });
 
 /* ==========================================================================
@@ -105,24 +104,16 @@ function initBackgroundCanvas() {
 }
 
 /* ==========================================================================
-   2. Terminal Tabs & Command Display Switching
+   2. Showcase View Switching Tabs
    ========================================================================== */
 
-function initTerminalTabs() {
-  const tabs = document.querySelectorAll('.terminal-tab');
-  const panels = document.querySelectorAll('.tab-content');
-  const cmdDisplay = document.getElementById('terminal-cmd-display');
-
-  const commands = {
-    table: 'open -a OSXTrafficStats  # Menu bar status daemon',
-    graph: 'open -a OSXTrafficStats --args --graph  # Floating HUD window',
-    apps: 'nettop -P -x -L 1 -J bytes_in,bytes_out  # Kernel socket attribution',
-    menubar: 'defaults read com.smford.osx-traffic-stats  # Menu bar configuration'
-  };
+function initShowcaseTabs() {
+  const tabs = document.querySelectorAll('.showcase-tab');
+  const panels = document.querySelectorAll('.showcase-panel');
 
   tabs.forEach((tab) => {
     tab.addEventListener('click', () => {
-      const targetTab = tab.getAttribute('data-tab');
+      const targetView = tab.getAttribute('data-view');
 
       // Update tab active classes
       tabs.forEach((t) => {
@@ -134,14 +125,9 @@ function initTerminalTabs() {
 
       // Update visible panel
       panels.forEach((p) => p.classList.remove('active'));
-      const activePanel = document.getElementById(`tab-${targetTab}`);
+      const activePanel = document.getElementById(`view-${targetView}`);
       if (activePanel) {
         activePanel.classList.add('active');
-      }
-
-      // Update prompt line command
-      if (cmdDisplay && commands[targetTab]) {
-        cmdDisplay.textContent = commands[targetTab];
       }
     });
   });
@@ -209,44 +195,5 @@ function copyToClipboard(text, btnElement) {
       }, 2000);
     }
   });
-}
-
-/* ==========================================================================
-   4. Live Metrics Simulation (STATUS Tab)
-   ========================================================================== */
-
-function startLiveMetricsSimulation() {
-  const rxEl = document.getElementById('stat-rx');
-  const txEl = document.getElementById('stat-tx');
-  const totRxEl = document.getElementById('stat-tot-rx');
-  const totTxEl = document.getElementById('stat-tot-tx');
-  const pingEl = document.getElementById('stat-ping');
-
-  if (!rxEl || !txEl) return;
-
-  let totalRxGb = 2.14;
-  let totalTxMb = 480.2;
-
-  setInterval(() => {
-    // Only update if table tab is currently visible
-    const tableTab = document.getElementById('tab-table');
-    if (!tableTab || !tableTab.classList.contains('active')) return;
-
-    // Simulate fluctuating bandwidth
-    const rxMb = (Math.random() * 2.8 + 2.1).toFixed(1);
-    const txKb = Math.floor(Math.random() * 320 + 260);
-    const pingMs = (Math.random() * 2.4 + 5.6).toFixed(1);
-
-    rxEl.textContent = `↓ ${rxMb} MB/s`;
-    txEl.textContent = `↑ ${txKb} KB/s`;
-    if (pingEl) {
-      pingEl.innerHTML = `<span class="ping-icon">⚡</span> ${pingMs} ms (Excellent)`;
-    }
-
-    totalRxGb += 0.002;
-    totalTxMb += 0.4;
-    totRxEl.textContent = `${totalRxGb.toFixed(2)} GB`;
-    totTxEl.textContent = `${totalTxMb.toFixed(1)} MB`;
-  }, 1600);
 }
 

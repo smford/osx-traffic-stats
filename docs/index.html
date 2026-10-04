@@ -63,253 +63,174 @@
           Real-time bandwidth speeds, latency ping, and per-process network stats built natively for macOS. Lightweight, local, and private.
         </p>
 
-        <!-- Glassmorphic Terminal Emulator & App Inspector Window -->
-        <div class="terminal-shell-wrapper">
-          <div class="terminal-window">
-            <!-- Window Title Bar -->
-            <div class="terminal-header">
+        <!-- Native macOS App Screenshot Showcase -->
+        <div class="showcase-shell-wrapper">
+          <div class="showcase-window">
+            <!-- Showcase Title & Controls Bar -->
+            <div class="showcase-header">
               <div class="window-controls">
                 <span class="control-dot dot-red"></span>
                 <span class="control-dot dot-yellow"></span>
                 <span class="control-dot dot-green"></span>
               </div>
 
-              <!-- Terminal Mode Tabs -->
-              <div class="terminal-tabs" role="tablist">
-                <button class="terminal-tab active" data-tab="table" role="tab" aria-selected="true">
-                  <span class="tab-indicator"></span>STATUS
+              <!-- View Switcher Tabs -->
+              <div class="showcase-tabs" role="tablist">
+                <button class="showcase-tab active" data-view="both" role="tab" aria-selected="true">
+                  <span class="tab-indicator"></span>OVERVIEW
                 </button>
-                <button class="terminal-tab" data-tab="graph" role="tab" aria-selected="false">HUD GRAPH</button>
-                <button class="terminal-tab" data-tab="apps" role="tab" aria-selected="false">TOP APPS</button>
-                <button class="terminal-tab" data-tab="menubar" role="tab" aria-selected="false">MENU BAR</button>
+                <button class="showcase-tab" data-view="hud" role="tab" aria-selected="false">
+                  FLOATING HUD GRAPH
+                </button>
+                <button class="showcase-tab" data-view="menu" role="tab" aria-selected="false">
+                  MENU BAR &amp; PING
+                </button>
               </div>
 
-              <div class="terminal-meta">
-                <span class="terminal-badge">macOS Native • sysctl</span>
+              <div class="showcase-meta">
+                <span class="showcase-badge">Native AppKit • Retina Capture</span>
               </div>
             </div>
 
-            <!-- Terminal Screen Body -->
-            <div class="terminal-body">
-              <!-- Command Prompt Line -->
-              <div class="terminal-prompt-line">
-                <span class="terminal-prompt">$</span>
-                <span class="terminal-cmd" id="terminal-cmd-display">open -a OSXTrafficStats</span>
-                <span class="terminal-cursor"></span>
-              </div>
-
-              <!-- Tab Panel: STATUS (Default Table) -->
-              <div class="tab-content active" id="tab-table">
-                <div class="terminal-table-container">
-                  <table class="terminal-table">
-                    <thead>
-                      <tr>
-                        <th>IFACE</th>
-                        <th>DOWNLOAD (RX)</th>
-                        <th>UPLOAD (TX)</th>
-                        <th>SESSION RX</th>
-                        <th>SESSION TX</th>
-                        <th>LATENCY</th>
-                      </tr>
-                    </thead>
-                    <tbody id="live-table-body">
-                      <tr class="active-row">
-                        <td class="col-iface"><span class="iface-dot"></span>en0 (Wi-Fi)</td>
-                        <td class="col-rx rate-green" id="stat-rx">↓ 3.8 MB/s</td>
-                        <td class="col-tx rate-cyan" id="stat-tx">↑ 412 KB/s</td>
-                        <td class="col-tot-rx" id="stat-tot-rx">2.14 GB</td>
-                        <td class="col-tot-tx" id="stat-tot-tx">480.2 MB</td>
-                        <td class="col-pkts" id="stat-ping"><span class="ping-icon">⚡</span> 6.7 ms (Excellent)</td>
-                      </tr>
-                      <tr class="dim-row">
-                        <td class="col-iface"><span class="iface-dot dim"></span>awdl0 (AirDrop)</td>
-                        <td class="col-rx">0 KB/s</td>
-                        <td class="col-tx">0 KB/s</td>
-                        <td class="col-tot-rx">128.4 MB</td>
-                        <td class="col-tot-tx">45.2 MB</td>
-                        <td class="col-pkts">—</td>
-                      </tr>
-                      <tr class="dim-row">
-                        <td class="col-iface"><span class="iface-dot dim"></span>lo0 (Loopback)</td>
-                        <td class="col-rx">48 KB/s</td>
-                        <td class="col-tx">48 KB/s</td>
-                        <td class="col-tot-rx">892.1 MB</td>
-                        <td class="col-tot-tx">892.1 MB</td>
-                        <td class="col-pkts">—</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-
-                <!-- Animated Bandwidth Cap Indicator -->
-                <div class="bandwidth-cap-module">
-                  <div class="cap-header">
-                    <span class="cap-label">Session Data Cap Sentinel</span>
-                    <span class="cap-metric" id="cap-percent-label">42% (2.1 GB / 5.0 GB Session Cap)</span>
-                  </div>
-                  <div class="cap-bar-ascii">
-                    <span class="cap-bracket">[</span>
-                    <span class="cap-segments" id="cap-segments-visual">|||||||||||||||||||||||||</span>
-                    <span class="cap-empty" id="cap-empty-visual">...................................</span>
-                    <span class="cap-bracket">]</span>
-                    <span class="cap-highlight">42% Data Cap</span>
-                  </div>
-                </div>
-
-                <!-- Top Apps Attribution Preview -->
-                <div class="top-apps-bar">
-                  <span class="apps-tag">TOP APPS</span>
-                  <span class="apps-item">Firefox: ↓ 2.6 MB/s</span>
-                  <span class="apps-divider">•</span>
-                  <span class="apps-item">Discord: ↓ 740 KB/s</span>
-                  <span class="apps-divider">•</span>
-                  <span class="apps-item">git-lfs: ↑ 380 KB/s</span>
-                </div>
-              </div>
-
-              <!-- Tab Panel: HUD GRAPH (Real Floating Cocoa Window Preview) -->
-              <div class="tab-content" id="tab-graph">
-                <div class="hud-graph-mockup">
-                  <div class="hud-top-bar">
-                    <div class="hud-speed-badges">
-                      <span class="hud-dot dot-orange"></span>
-                      <span class="hud-label">Upload: <strong class="text-orange">↑ 412 KB/s</strong> (Peak: 12.4 MB/s)</span>
-                      <span class="hud-dot dot-cyan"></span>
-                      <span class="hud-label">Download: <strong class="text-cyan">↓ 3.8 MB/s</strong> (Peak: 48.2 MB/s)</span>
+            <!-- Showcase Content Panels -->
+            <div class="showcase-body">
+              <!-- Panel 1: Both Views (Overview Grid) -->
+              <div class="showcase-panel active" id="view-both">
+                <div class="showcase-dual-grid">
+                  <!-- Left: Floating HUD Window -->
+                  <div class="showcase-card hud-card">
+                    <div class="card-caption">
+                      <div class="caption-left">
+                        <span class="caption-tag tag-cyan">FLOATING HUD</span>
+                        <span class="caption-title">Real-Time Bandwidth Waves &amp; Process Attribution</span>
+                      </div>
+                      <span class="caption-badge">Cocoa HUD</span>
                     </div>
-                    <div class="hud-timeframe-controls">
-                      <button class="hud-btn active">1m</button>
-                      <button class="hud-btn">5m</button>
-                      <button class="hud-btn">15m</button>
-                      <button class="hud-btn btn-reset">Reset Peaks</button>
+                    <div class="image-frame hud-frame">
+                      <img src="screenshot-hud.png" alt="OSX Traffic Stats Floating Cocoa HUD Window with real-time bandwidth graph" class="showcase-img" loading="eager">
+                    </div>
+                    <div class="card-highlights">
+                      <span class="highlight-item"><span class="highlight-dot dot-cyan"></span>Download Wave &amp; Peak Tracker</span>
+                      <span class="highlight-item"><span class="highlight-dot dot-orange"></span>Upload Wave &amp; Peak Tracker</span>
+                      <span class="highlight-item"><span class="highlight-dot dot-emerald"></span><code class="inline-code">nettop</code> Process Attribution</span>
                     </div>
                   </div>
 
-                  <div class="hud-canvas-container">
-                    <svg viewBox="0 0 600 130" class="hud-svg" preserveAspectRatio="none">
-                      <!-- Grid lines -->
-                      <line x1="0" y1="20" x2="600" y2="20" stroke="rgba(255,255,255,0.08)" stroke-dasharray="3,3" />
-                      <line x1="0" y1="65" x2="600" y2="65" stroke="rgba(255,255,255,0.08)" stroke-dasharray="3,3" />
-                      <line x1="0" y1="110" x2="600" y2="110" stroke="rgba(255,255,255,0.08)" />
-
-                      <!-- Download Area & Line (Cyan) -->
-                      <defs>
-                        <linearGradient id="cyanGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stop-color="#06b6d4" stop-opacity="0.35"/>
-                          <stop offset="100%" stop-color="#06b6d4" stop-opacity="0.02"/>
-                        </linearGradient>
-                        <linearGradient id="amberGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.30"/>
-                          <stop offset="100%" stop-color="#f59e0b" stop-opacity="0.02"/>
-                        </linearGradient>
-                      </defs>
-                      <path d="M 0,110 Q 50,105 100,90 T 200,60 T 300,75 T 400,30 T 500,45 T 600,35 L 600,110 Z" fill="url(#cyanGrad)" />
-                      <path d="M 0,110 Q 50,105 100,90 T 200,60 T 300,75 T 400,30 T 500,45 T 600,35" fill="none" stroke="#06b6d4" stroke-width="2" />
-                      <circle cx="600" cy="35" r="3.5" fill="#06b6d4" />
-
-                      <!-- Upload Area & Line (Amber) -->
-                      <path d="M 0,110 Q 60,108 120,100 T 240,95 T 360,80 T 480,92 T 600,78 L 600,110 Z" fill="url(#amberGrad)" />
-                      <path d="M 0,110 Q 60,108 120,100 T 240,95 T 360,80 T 480,92 T 600,78" fill="none" stroke="#f59e0b" stroke-width="2" />
-                      <circle cx="600" cy="78" r="3.5" fill="#f59e0b" />
-                    </svg>
-                  </div>
-
-                  <div class="hud-bottom-bar">
-                    <span class="hud-time">-60s</span>
-                    <span class="hud-time">-30s</span>
-                    <span class="hud-time">Now</span>
+                  <!-- Right: Menu Bar Dropdown -->
+                  <div class="showcase-card menu-card">
+                    <div class="card-caption">
+                      <div class="caption-left">
+                        <span class="caption-tag tag-emerald">MENU BAR</span>
+                        <span class="caption-title">Sparklines, ICMP Ping &amp; Data Sentinel</span>
+                      </div>
+                      <span class="caption-badge">System Tray</span>
+                    </div>
+                    <div class="image-frame menu-frame">
+                      <img src="screenshot-menu.png" alt="OSX Traffic Stats macOS Menu Bar Dropdown showing sparklines and stats" class="showcase-img menu-img" loading="eager">
+                    </div>
+                    <div class="card-highlights">
+                      <span class="highlight-item"><span class="highlight-dot dot-emerald"></span>Unicode In-Menu Sparklines</span>
+                      <span class="highlight-item"><span class="highlight-dot dot-cyan"></span>Live ICMP Gateway Ping</span>
+                      <span class="highlight-item"><span class="highlight-dot dot-orange"></span>Configurable Data Cap Alerts</span>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <!-- Tab Panel: TOP APPS (nettop Process Attribution) -->
-              <div class="tab-content" id="tab-apps">
-                <div class="terminal-table-container">
-                  <table class="terminal-table">
-                    <thead>
-                      <tr>
-                        <th>PID</th>
-                        <th>APPLICATION</th>
-                        <th>DOWNLOAD (RX)</th>
-                        <th>UPLOAD (TX)</th>
-                        <th>TOTAL RATE</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr class="active-row">
-                        <td>54120</td>
-                        <td class="col-iface"><span class="iface-dot"></span>Firefox.app</td>
-                        <td class="rate-green">↓ 2.6 MB/s</td>
-                        <td class="rate-cyan">↑ 180 KB/s</td>
-                        <td>2.78 MB/s</td>
-                      </tr>
-                      <tr class="active-row">
-                        <td>53890</td>
-                        <td class="col-iface"><span class="iface-dot"></span>Discord.app</td>
-                        <td class="rate-green">↓ 740 KB/s</td>
-                        <td class="rate-cyan">↑ 42 KB/s</td>
-                        <td>782 KB/s</td>
-                      </tr>
-                      <tr class="active-row">
-                        <td>55210</td>
-                        <td class="col-iface"><span class="iface-dot"></span>git-lfs</td>
-                        <td class="rate-green">↓ 12 KB/s</td>
-                        <td class="rate-cyan">↑ 380 KB/s</td>
-                        <td>392 KB/s</td>
-                      </tr>
-                      <tr class="dim-row">
-                        <td>51400</td>
-                        <td class="col-iface"><span class="iface-dot dim"></span>Spotify.app</td>
-                        <td>↓ 160 KB/s</td>
-                        <td>↑ 8 KB/s</td>
-                        <td>168 KB/s</td>
-                      </tr>
-                      <tr class="dim-row">
-                        <td>00380</td>
-                        <td class="col-iface"><span class="iface-dot dim"></span>WindowServer</td>
-                        <td>↓ 45 KB/s</td>
-                        <td>↑ 15 KB/s</td>
-                        <td>60 KB/s</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-                <div class="proc-attribution-footnote">
-                  <span>⚡ Sourced directly from macOS kernel socket attribution via <code class="inline-code">nettop</code></span>
+              <!-- Panel 2: Floating HUD Focus -->
+              <div class="showcase-panel" id="view-hud">
+                <div class="showcase-focus-layout">
+                  <div class="focus-header">
+                    <div class="focus-title-group">
+                      <span class="caption-tag tag-cyan">FLOATING COCOA HUD WINDOW</span>
+                      <h3 class="focus-title">Multi-Interval Bandwidth History with Auto-Scaling Dual Curves</h3>
+                    </div>
+                    <p class="focus-desc">
+                      A draggable, floating AppKit HUD window that stays on top with configurable opacity (50%–100%) and corner snapping.
+                    </p>
+                  </div>
+
+                  <div class="image-frame hud-focus-frame">
+                    <img src="screenshot-hud.png" alt="OSX Traffic Stats Floating Cocoa HUD Window in detail" class="showcase-img-large" loading="lazy">
+                  </div>
+
+                  <div class="focus-feature-grid">
+                    <div class="focus-feature-card">
+                      <span class="feature-bullet">📈</span>
+                      <div>
+                        <strong>Dual Color Waveforms</strong>
+                        <p>Cyan (download) and orange (upload) curves with auto-scaling peak limits and filled gradient areas.</p>
+                      </div>
+                    </div>
+                    <div class="focus-feature-card">
+                      <span class="feature-bullet">⏱</span>
+                      <div>
+                        <strong>1m • 5m • 15m Intervals</strong>
+                        <p>Toggle instantly between 60-second micro-spikes and 15-minute macro trends with peak record tracking.</p>
+                      </div>
+                    </div>
+                    <div class="focus-feature-card">
+                      <span class="feature-bullet">⚡</span>
+                      <div>
+                        <strong>Process Network Attribution</strong>
+                        <p>Live bottom bar reveals the top network-consuming applications directly from macOS kernel socket counters.</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <!-- Tab Panel: MENU BAR (Real Dropdown Structure Preview) -->
-              <div class="tab-content" id="tab-menubar">
-                <div class="menubar-mockup">
-                  <div class="macos-menubar-strip">
-                    <span class="apple-icon"></span>
-                    <span class="menubar-app-active">↑ 412 KB/s  ↓ 3.8 MB/s  [ ▂▃▅█]</span>
-                    <span class="menubar-spacer"></span>
-                    <span class="menubar-sys-icon">⚡ 7 ms</span>
-                    <span class="menubar-sys-icon">Sun 19:42</span>
+              <!-- Panel 3: Menu Bar Focus -->
+              <div class="showcase-panel" id="view-menu">
+                <div class="showcase-focus-layout">
+                  <div class="focus-header">
+                    <div class="focus-title-group">
+                      <span class="caption-tag tag-emerald">NATIVE MENU BAR &amp; PING</span>
+                      <h3 class="focus-title">Compact Menubar Readouts, Unicode Sparklines, and Session Sentinel</h3>
+                    </div>
+                    <p class="focus-desc">
+                      Resides quietly in your macOS menu bar with zero layout shift, low CPU impact, and instant dropdown metrics.
+                    </p>
                   </div>
 
-                  <div class="menubar-dropdown">
-                    <div class="menu-item bold">Upload:   ↑ 412 KB/s   [ ▂▃▅█]</div>
-                    <div class="menu-item bold">Download: ↓ 3.8 MB/s   [ ▂▃▅█]</div>
-                    <div class="menu-item highlight">⚡ Ping: 6.7 ms (Excellent)</div>
-                    <div class="menu-separator"></div>
-                    <div class="menu-item dim">Session Upload:   480.2 MB</div>
-                    <div class="menu-item dim">Session Download: 2.14 GB</div>
-                    <div class="menu-item dim">Lifetime Upload:  42.1 GB</div>
-                    <div class="menu-item dim">Lifetime Download: 189.4 GB</div>
-                    <div class="menu-item action">↺ Reset Session Stats</div>
-                    <div class="menu-item action">↺ Reset Peak Speeds</div>
-                    <div class="menu-separator"></div>
-                    <div class="menu-item submenu">▶ Network Interface (Wi-Fi en0)</div>
-                    <div class="menu-item submenu">▶ Display Options (Bytes, Standard, Both)</div>
-                    <div class="menu-item submenu">▶ Refresh Rate (Normal 1.0s)</div>
-                    <div class="menu-item submenu">▶ Data Cap Alert (5 GB)</div>
-                    <div class="menu-item submenu">▶ Top Active Apps (Firefox, Discord)</div>
-                    <div class="menu-separator"></div>
-                    <div class="menu-item">Show Traffic Graph (HUD Window)</div>
-                    <div class="menu-item checked">✓ Launch at Login</div>
+                  <div class="menu-focus-split">
+                    <div class="image-frame menu-focus-image-frame">
+                      <img src="screenshot-menu.png" alt="OSX Traffic Stats Menu Bar details" class="showcase-img-menu-large" loading="lazy">
+                    </div>
+
+                    <div class="menu-focus-details">
+                      <div class="menu-detail-box">
+                        <div class="detail-header">
+                          <span class="detail-icon">⚡</span>
+                          <h4>In-Menu Unicode Sparklines</h4>
+                        </div>
+                        <p>Transfer speeds rendered with live 10-second Unicode sparkline history (<code class="inline-code">[ ▂▃▅█]</code>) for both upload and download.</p>
+                      </div>
+
+                      <div class="menu-detail-box">
+                        <div class="detail-header">
+                          <span class="detail-icon">⚡</span>
+                          <h4>ICMP DNS Gateway Latency</h4>
+                        </div>
+                        <p>Continuous ping monitor to root DNS gateways (<code class="inline-code">1.1.1.1</code> / <code class="inline-code">8.8.8.8</code>) every 4s with latency in ms and quality ratings.</p>
+                      </div>
+
+                      <div class="menu-detail-box">
+                        <div class="detail-header">
+                          <span class="detail-icon">⚡</span>
+                          <h4>Session &amp; Lifetime Accounting</h4>
+                        </div>
+                        <p>Track current session RX/TX totals alongside persistent lifetime bandwidth totals. Reset counters anytime with one click.</p>
+                      </div>
+
+                      <div class="menu-detail-box">
+                        <div class="detail-header">
+                          <span class="detail-icon">⚡</span>
+                          <h4>Session Data Cap Sentinel</h4>
+                        </div>
+                        <p>Set session caps (1 GB, 2 GB, 5 GB, 10 GB, 20 GB). Fires native macOS notifications and sound alerts when reached.</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
