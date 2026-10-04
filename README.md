@@ -51,31 +51,42 @@
 
 ## Installation
 
-### Via Homebrew (Recommended)
+### Via Homebrew Cask (Recommended — Native macOS App)
 
-Install using the official Homebrew tap:
+Install the native macOS `.app` bundle directly into `/Applications`:
 
 ```bash
-brew install smford/tap/osx-traffic-stats
+brew install --cask smford/tap/osx-traffic-stats
 ```
 
 Or add the tap first and then install:
 
 ```bash
 brew tap smford/tap
-brew install osx-traffic-stats
+brew install --cask osx-traffic-stats
 ```
+
+Once installed:
+- Launch via **Spotlight** (`Cmd + Space` &rarr; type `OSX Traffic Stats`), **Launchpad**, or Finder &rarr; **Applications**.
+- Or from terminal: `open -a OSXTrafficStats`
 
 To upgrade:
 
 ```bash
-brew update
-brew upgrade osx-traffic-stats
+brew upgrade --cask osx-traffic-stats
+```
+
+### Via Homebrew Formula (Standalone CLI Binary)
+
+If you prefer only the standalone command-line binary installed to your `PATH` (`/opt/homebrew/bin`):
+
+```bash
+brew install --formula smford/tap/osx-traffic-stats
 ```
 
 ### Pre-built Binaries & App Bundle
 
-Download universal binaries (Apple Silicon & Intel) or the macOS application bundle (`OSXTrafficStats-v*.zip`) from [GitHub Releases](https://github.com/smford/osx-traffic-stats/releases).
+Download pre-compiled universal binaries (Apple Silicon & Intel) or the macOS application bundle (`OSXTrafficStats-v*.zip`) directly from [GitHub Releases](https://github.com/smford/osx-traffic-stats/releases).
 
 ## Prerequisites
 
