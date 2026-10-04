@@ -81,6 +81,12 @@ func onReady() {
 	mUploadRate.Disable()
 	mDownloadRate = systray.AddMenuItem("Download: --", "Current download speed")
 	mDownloadRate.Disable()
+	mLatency := systray.AddMenuItem("Ping: Measuring...", "Round-trip network latency to DNS gateway (1.1.1.1 / 8.8.8.8)")
+	mLatency.Disable()
+
+	StartLatencyMonitor(4*time.Second, func(status string) {
+		mLatency.SetTitle(status)
+	})
 
 	systray.AddSeparator()
 
@@ -500,7 +506,12 @@ func monitorTraffic() {
 				} else {
 					systray.SetTitle(fmt.Sprintf("↑ %s  ↓ %s", upSpeedFixed, downSpeedFixed))
 				}
-				systray.SetTooltip(fmt.Sprintf("Bandwidth Monitor\n↑ %s [%s] (Session: %s, Total: %s)\n↓ %s [%s] (Session: %s, Total: %s)", upSpeed, upSpark, formatBytes(totalUp), formatBytes(allTimeUp), downSpeed, downSpark, formatBytes(totalDown), formatBytes(allTimeDown)))
+				pingMs := currentLatencyMs.Load()
+				var pingStr string
+				if pingMs > 0 && pingMs < LatencyTimeoutMs {
+					pingStr = fmt.Sprintf(" | Ping: %d ms", pingMs)
+				}
+				systray.SetTooltip(fmt.Sprintf("Bandwidth Monitor%s\n↑ %s [%s] (Session: %s, Total: %s)\n↓ %s [%s] (Session: %s, Total: %s)", pingStr, upSpeed, upSpark, formatBytes(totalUp), formatBytes(allTimeUp), downSpeed, downSpark, formatBytes(totalDown), formatBytes(allTimeDown)))
 
 				mUploadRate.SetTitle(fmt.Sprintf("Upload:   ↑ %-8s  [%s]", upSpeed, upSpark))
 				mDownloadRate.SetTitle(fmt.Sprintf("Download: ↓ %-8s  [%s]", downSpeed, downSpark))
