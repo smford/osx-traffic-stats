@@ -63,6 +63,10 @@ func onReady() {
 
 	systray.AddSeparator()
 
+	mLaunchAtLogin := systray.AddMenuItemCheckbox("Launch at Login", "Start Bandwidth Monitor automatically on login", isLaunchAtLoginEnabled())
+
+	systray.AddSeparator()
+
 	mAbout := systray.AddMenuItem("About OSX Traffic Stats", "Show application and copyright information")
 
 	systray.AddSeparator()
@@ -81,6 +85,19 @@ func onReady() {
 	go func() {
 		for range mToggleGraph.ClickedCh {
 			toggleTrafficGraph()
+		}
+	}()
+
+	go func() {
+		for range mLaunchAtLogin.ClickedCh {
+			newVal := !mLaunchAtLogin.Checked()
+			if err := setLaunchAtLogin(newVal); err == nil {
+				if newVal {
+					mLaunchAtLogin.Check()
+				} else {
+					mLaunchAtLogin.Uncheck()
+				}
+			}
 		}
 	}()
 

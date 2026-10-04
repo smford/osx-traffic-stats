@@ -13,6 +13,7 @@ A lightweight macOS menu bar utility that displays real-time network upload and 
   - Session data totals (cumulative uploaded and downloaded bytes)
   - One-click session stats reset
   - One-click toggle for the floating **Traffic Graph** window
+  - **Launch at Login** toggle to start automatically on macOS boot
   - Native **About** dialog with copyright details and link to the GitHub repository
 - **Floating HUD Traffic Graph Window**: A sleek, translucent native macOS HUD window displaying:
   - Real-time 60-second dual-line bandwidth history with smooth curves and gradient area fills (Amber/Orange for Upload, Cyan/Blue for Download)
