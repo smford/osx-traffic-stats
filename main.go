@@ -134,6 +134,37 @@ func onReady() {
 
 	systray.AddSeparator()
 
+	mTopProcsMenu := systray.AddMenuItem("Top Active Apps", "Applications currently consuming bandwidth")
+	var procMenuItems []*systray.MenuItem
+	for i := 0; i < 5; i++ {
+		item := mTopProcsMenu.AddSubMenuItem("Monitoring...", "")
+		item.Disable()
+		procMenuItems = append(procMenuItems, item)
+	}
+
+	go func() {
+		UpdateProcessTraffic()
+		ticker := time.NewTicker(2 * time.Second)
+		defer ticker.Stop()
+
+		for range ticker.C {
+			procs := UpdateProcessTraffic()
+			for i := 0; i < len(procMenuItems); i++ {
+				if i < len(procs) {
+					procMenuItems[i].SetTitle(FormatProcessItem(procs[i]))
+					procMenuItems[i].Show()
+				} else if i == 0 {
+					procMenuItems[i].SetTitle("No active network traffic")
+					procMenuItems[i].Show()
+				} else {
+					procMenuItems[i].Hide()
+				}
+			}
+		}
+	}()
+
+	systray.AddSeparator()
+
 	mToggleGraph = systray.AddMenuItem("Show Traffic Graph", "Open a real-time bandwidth graph window")
 
 	systray.AddSeparator()
