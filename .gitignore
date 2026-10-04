@@ -1,0 +1,27 @@
+# Binaries
+/osx-traffic-stats
+/bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test artifacts
+*.test
+*.out
+coverage.html
+
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+
+# IDE & Editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
