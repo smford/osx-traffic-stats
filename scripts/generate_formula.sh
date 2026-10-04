@@ -88,7 +88,7 @@ cask "osx-traffic-stats" do
   desc "Real-time macOS menu bar network traffic monitor"
   homepage "https://github.com/smford/osx-traffic-stats"
 
-  depends_on macos: ">= :high_sierra"
+  depends_on :macos
 
   app "OSXTrafficStats.app"
 
