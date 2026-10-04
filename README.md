@@ -1,6 +1,21 @@
-# osx-traffic-stats
+<p align="center">
+  <img src="assets/logo.svg" alt="OSX Traffic Stats Logo" width="128" height="128" />
+</p>
 
-A lightweight macOS menu bar utility that displays real-time network upload and download speeds next to the menu bar clock.
+<h1 align="center">OSX Traffic Stats</h1>
+
+<p align="center">
+  A lightweight macOS menu bar utility that displays real-time network upload and download speeds next to the menu bar clock.
+</p>
+
+<p align="center">
+  <a href="https://github.com/smford/osx-traffic-stats/releases"><img src="https://img.shields.io/github/v/release/smford/osx-traffic-stats?color=blue" alt="Latest Release" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT" /></a>
+  <a href="https://github.com/smford/homebrew-tap"><img src="https://img.shields.io/badge/Homebrew-smford%2Ftap-orange.svg" alt="Homebrew" /></a>
+  <a href="https://github.com/smford/osx-traffic-stats/actions/workflows/release.yml"><img src="https://img.shields.io/github/actions/workflow/status/smford/osx-traffic-stats/release.yml?branch=main" alt="Release Workflow" /></a>
+</p>
+
+---
 
 ## Features
 

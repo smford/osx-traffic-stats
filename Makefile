@@ -30,6 +30,7 @@ app: build
 	@cp $(BUILD_DIR)/$(BINARY_NAME) $(APP_MACOS)/$(BINARY_NAME)
 	@cp assets/Info.plist $(APP_CONTENTS)/Info.plist
 	@cp assets/AppIcon.icns $(APP_RESOURCES)/AppIcon.icns
+	@cp assets/logo.svg $(APP_RESOURCES)/logo.svg
 	@if [ -x /usr/libexec/PlistBuddy ]; then \
 		/usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $(CLEAN_VERSION)" $(APP_CONTENTS)/Info.plist 2>/dev/null || true; \
 		/usr/libexec/PlistBuddy -c "Set :CFBundleVersion $(CLEAN_VERSION)" $(APP_CONTENTS)/Info.plist 2>/dev/null || true; \
@@ -41,6 +42,7 @@ app-universal: build-universal
 	@cp $(BUILD_DIR)/$(BINARY_NAME) $(APP_MACOS)/$(BINARY_NAME)
 	@cp assets/Info.plist $(APP_CONTENTS)/Info.plist
 	@cp assets/AppIcon.icns $(APP_RESOURCES)/AppIcon.icns
+	@cp assets/logo.svg $(APP_RESOURCES)/logo.svg
 	@if [ -x /usr/libexec/PlistBuddy ]; then \
 		/usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $(CLEAN_VERSION)" $(APP_CONTENTS)/Info.plist 2>/dev/null || true; \
 		/usr/libexec/PlistBuddy -c "Set :CFBundleVersion $(CLEAN_VERSION)" $(APP_CONTENTS)/Info.plist 2>/dev/null || true; \

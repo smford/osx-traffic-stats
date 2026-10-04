@@ -134,10 +134,11 @@ void updateMenuBarGraph(uint64_t upSpeed, uint64_t downSpeed, int iconMode) {
 
 static BOOL aboutBoxOpen = NO;
 
-void showAboutBox(const char *title, const char *message, const char *url) {
+void showAboutBox(const char *title, const char *message, const char *url, const void *iconData, int iconLen) {
 	NSString *nsTitle = [NSString stringWithUTF8String:title];
 	NSString *nsMessage = [NSString stringWithUTF8String:message];
 	NSString *nsUrl = [NSString stringWithUTF8String:url];
+	NSData *nsIconData = (iconData != NULL && iconLen > 0) ? [NSData dataWithBytes:iconData length:iconLen] : nil;
 
 	dispatch_async(dispatch_get_main_queue(), ^{
 		if (aboutBoxOpen) {
@@ -152,6 +153,14 @@ void showAboutBox(const char *title, const char *message, const char *url) {
 			[alert setAlertStyle:NSAlertStyleInformational];
 			[alert addButtonWithTitle:@"OK"];
 			[alert addButtonWithTitle:@"View on GitHub"];
+
+			if (nsIconData) {
+				NSImage *iconImg = [[NSImage alloc] initWithData:nsIconData];
+				if (iconImg) {
+					[iconImg setSize:NSMakeSize(64.0, 64.0)];
+					[alert setIcon:iconImg];
+				}
+			}
 
 			[NSApp activateIgnoringOtherApps:YES];
 			[[alert window] setLevel:NSFloatingWindowLevel];
@@ -186,7 +195,14 @@ func showAboutBox() {
 	cURL := C.CString(githubURL)
 	defer C.free(unsafe.Pointer(cURL))
 
-	C.showAboutBox(cTitle, cMessage, cURL)
+	var iconPtr unsafe.Pointer
+	var iconLen C.int
+	if len(appLogoSVG) > 0 {
+		iconPtr = unsafe.Pointer(&appLogoSVG[0])
+		iconLen = C.int(len(appLogoSVG))
+	}
+
+	C.showAboutBox(cTitle, cMessage, cURL, iconPtr, iconLen)
 }
 
 func updateMenuBarGraph(upSpeed, downSpeed uint64, mode MenuBarIconMode) {

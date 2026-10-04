@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "embed"
 	"flag"
 	"fmt"
 	"sync/atomic"
@@ -8,6 +9,9 @@ import (
 
 	"github.com/getlantern/systray"
 )
+
+//go:embed assets/logo.svg
+var appLogoSVG []byte
 
 var (
 	sessionSent atomic.Uint64
