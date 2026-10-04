@@ -42,3 +42,39 @@ func setGraphAlwaysOnTopConfig(val bool) {
 	graphAlwaysOnTopVal.Store(val)
 	setGraphAlwaysOnTop(val)
 }
+
+// ResampleTrafficHistory resamples raw second-by-second history samples into displayPoints buckets
+// for a specified timeframe window (in seconds).
+func ResampleTrafficHistory(history []uint64, windowSec, displayPoints int) []uint64 {
+	if displayPoints <= 0 {
+		return nil
+	}
+	if windowSec <= 0 {
+		windowSec = 60
+	}
+	bucketSize := windowSec / displayPoints
+	if bucketSize < 1 {
+		bucketSize = 1
+	}
+
+	result := make([]uint64, displayPoints)
+	count := len(history)
+	startIndex := count - windowSec
+
+	for p := 0; p < displayPoints; p++ {
+		var maxInBucket uint64
+		bStart := startIndex + p*bucketSize
+		for b := 0; b < bucketSize; b++ {
+			idx := bStart + b
+			if idx >= 0 && idx < count {
+				val := history[idx]
+				if val > maxInBucket {
+					maxInBucket = val
+				}
+			}
+		}
+		result[p] = maxInBucket
+	}
+	return result
+}
+

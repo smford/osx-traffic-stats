@@ -158,8 +158,7 @@ static NSString* formatSpeedObjC(uint64_t bytesPerSec) {
 
     int windowSec = self.timeframeSeconds;
     if (windowSec <= 0) windowSec = 60;
-    int startIndex = HISTORY_CAPACITY - windowSec;
-    if (startIndex < 0) startIndex = 0;
+    int startIndex = _count - windowSec;
 
     // Resample into 60 display points
     uint64_t downSampled[DISPLAY_POINTS];
@@ -175,11 +174,14 @@ static NSString* formatSpeedObjC(uint64_t bytesPerSec) {
         uint64_t maxDownInBucket = 0;
         uint64_t maxUpInBucket = 0;
         int bStart = startIndex + p * bucketSize;
-        for (int b = 0; b < bucketSize && (bStart + b) < HISTORY_CAPACITY; b++) {
-            uint64_t d = _downloadHistory[bStart + b];
-            uint64_t u = _uploadHistory[bStart + b];
-            if (d > maxDownInBucket) maxDownInBucket = d;
-            if (u > maxUpInBucket) maxUpInBucket = u;
+        for (int b = 0; b < bucketSize; b++) {
+            int idx = bStart + b;
+            if (idx >= 0 && idx < _count) {
+                uint64_t d = _downloadHistory[idx];
+                uint64_t u = _uploadHistory[idx];
+                if (d > maxDownInBucket) maxDownInBucket = d;
+                if (u > maxUpInBucket) maxUpInBucket = u;
+            }
         }
         downSampled[p] = maxDownInBucket;
         upSampled[p] = maxUpInBucket;
