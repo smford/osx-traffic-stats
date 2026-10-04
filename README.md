@@ -12,6 +12,7 @@
   <a href="https://github.com/smford/osx-traffic-stats/releases"><img src="https://img.shields.io/github/v/release/smford/osx-traffic-stats?color=blue" alt="Latest Release" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT" /></a>
   <a href="https://github.com/smford/homebrew-tap"><img src="https://img.shields.io/badge/Homebrew-smford%2Ftap-orange.svg" alt="Homebrew" /></a>
+  <a href="https://smford.github.io/osx-traffic-stats/"><img src="https://img.shields.io/badge/Website-smford.github.io%2Fosx--traffic--stats-06b6d4?logo=safari&logoColor=white" alt="Website" /></a>
   <a href="https://github.com/smford/osx-traffic-stats/actions/workflows/release.yml"><img src="https://img.shields.io/github/actions/workflow/status/smford/osx-traffic-stats/release.yml?branch=main" alt="Release Workflow" /></a>
 </p>
 
