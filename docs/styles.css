@@ -596,23 +596,242 @@ body.obsidian-theme {
   color: var(--text-dim);
 }
 
-/* Code Blocks for JSON/CSV/Help */
-.code-block {
-  background: rgba(7, 10, 15, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 8px;
-  padding: 16px;
-  font-family: var(--font-mono);
-  font-size: 0.82rem;
-  line-height: 1.5;
-  overflow-x: auto;
+/* HUD Graph Floating Window Preview */
+.hud-graph-mockup {
+  background: rgba(10, 15, 24, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 12px 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
-.json-key { color: var(--cyan); }
-.json-str { color: var(--emerald); }
-.json-num { color: #f59e0b; }
-.json-punct { color: var(--text-dim); }
-.csv-header { color: var(--cyan); font-weight: 600; }
+.hud-top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 0.76rem;
+}
+
+.hud-speed-badges {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.hud-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  margin-right: 4px;
+}
+
+.dot-orange {
+  background-color: #f59e0b;
+  box-shadow: 0 0 8px #f59e0b;
+}
+
+.dot-cyan {
+  background-color: var(--cyan);
+  box-shadow: 0 0 8px var(--cyan);
+}
+
+.text-orange {
+  color: #f59e0b;
+}
+
+.hud-label {
+  color: var(--text-muted);
+}
+
+.hud-timeframe-controls {
+  display: flex;
+  gap: 4px;
+}
+
+.hud-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  padding: 3px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.hud-btn:hover {
+  color: var(--text-white);
+  border-color: var(--cyan);
+}
+
+.hud-btn.active {
+  background: rgba(6, 182, 212, 0.18);
+  border-color: var(--cyan);
+  color: var(--cyan-bright);
+}
+
+.hud-btn.btn-reset {
+  color: var(--text-dim);
+  border-style: dashed;
+}
+
+.hud-canvas-container {
+  height: 120px;
+  width: 100%;
+  position: relative;
+  padding: 8px 0;
+}
+
+.hud-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.hud-bottom-bar {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 6px;
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+/* Process Attribution Footnote */
+.proc-attribution-footnote {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  font-size: 0.74rem;
+  color: var(--text-dim);
+}
+
+/* macOS Menu Bar Mockup */
+.menubar-mockup {
+  display: flex;
+  flex-direction: column;
+}
+
+.macos-menubar-strip {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px 8px 0 0;
+  padding: 7px 16px;
+  font-size: 0.78rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.apple-icon {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+.menubar-app-active {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--emerald);
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  padding: 2px 8px;
+  border-radius: 4px;
+  text-shadow: 0 0 8px var(--emerald-glow);
+}
+
+.menubar-spacer {
+  flex: 1;
+}
+
+.menubar-sys-icon {
+  color: var(--text-dim);
+  font-size: 0.75rem;
+}
+
+.menubar-dropdown {
+  background: rgba(11, 17, 28, 0.97);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-top: none;
+  border-radius: 0 0 10px 10px;
+  box-shadow: 
+    0 16px 40px rgba(0, 0, 0, 0.7),
+    0 0 20px rgba(6, 182, 212, 0.08);
+  padding: 8px 0;
+  max-width: 380px;
+  margin-left: 28px;
+}
+
+.menu-item {
+  padding: 4px 16px;
+  font-size: 0.76rem;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.menu-item:hover {
+  background: rgba(6, 182, 212, 0.16);
+  color: var(--text-white);
+}
+
+.menu-item.bold {
+  color: var(--text-white);
+  font-weight: 600;
+}
+
+.menu-item.highlight {
+  color: var(--emerald);
+  font-weight: 600;
+}
+
+.menu-item.dim {
+  color: var(--text-dim);
+  font-size: 0.72rem;
+}
+
+.menu-item.action {
+  color: var(--cyan);
+  cursor: pointer;
+}
+
+.menu-item.action:hover {
+  color: var(--cyan-bright);
+  text-decoration: underline;
+}
+
+.menu-item.submenu {
+  color: var(--text-muted);
+}
+
+.menu-item.checked {
+  color: var(--text-white);
+  font-weight: 500;
+}
+
+.menu-separator {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.06);
+  margin: 6px 0;
+}
+
+.ping-icon {
+  display: inline-block;
+  color: #f59e0b;
+  margin-right: 4px;
+}
+
 
 /* ==========================================================================
    Pill-Shaped Install Command Input

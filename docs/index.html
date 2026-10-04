@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>osx-traffic-stats — macOS Network Observability Without The Bloat</title>
-  <meta name="description" content="Real-time bandwidth accounting, packet metrics, and interface stats built natively for macOS. Lightweight, scriptable, and local.">
+  <meta name="description" content="Real-time bandwidth speeds, latency ping, and per-process network stats built natively for macOS. Lightweight, local, and private.">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -60,10 +60,10 @@
         </h1>
 
         <p class="hero-subheadline">
-          Real-time bandwidth accounting, packet metrics, and interface stats built natively for macOS. Lightweight, scriptable, and local.
+          Real-time bandwidth speeds, latency ping, and per-process network stats built natively for macOS. Lightweight, local, and private.
         </p>
 
-        <!-- Glassmorphic Terminal Emulator Window -->
+        <!-- Glassmorphic Terminal Emulator & App Inspector Window -->
         <div class="terminal-shell-wrapper">
           <div class="terminal-window">
             <!-- Window Title Bar -->
@@ -77,15 +77,15 @@
               <!-- Terminal Mode Tabs -->
               <div class="terminal-tabs" role="tablist">
                 <button class="terminal-tab active" data-tab="table" role="tab" aria-selected="true">
-                  <span class="tab-indicator"></span>TABLE
+                  <span class="tab-indicator"></span>STATUS
                 </button>
-                <button class="terminal-tab" data-tab="json" role="tab" aria-selected="false">JSON</button>
-                <button class="terminal-tab" data-tab="csv" role="tab" aria-selected="false">CSV</button>
-                <button class="terminal-tab" data-tab="help" role="tab" aria-selected="false">--help</button>
+                <button class="terminal-tab" data-tab="graph" role="tab" aria-selected="false">HUD GRAPH</button>
+                <button class="terminal-tab" data-tab="apps" role="tab" aria-selected="false">TOP APPS</button>
+                <button class="terminal-tab" data-tab="menubar" role="tab" aria-selected="false">MENU BAR</button>
               </div>
 
               <div class="terminal-meta">
-                <span class="terminal-badge">zsh / sysctl</span>
+                <span class="terminal-badge">macOS Native • sysctl</span>
               </div>
             </div>
 
@@ -94,22 +94,22 @@
               <!-- Command Prompt Line -->
               <div class="terminal-prompt-line">
                 <span class="terminal-prompt">$</span>
-                <span class="terminal-cmd" id="terminal-cmd-display">osx-traffic-stats --interface en0 --interval 1s</span>
+                <span class="terminal-cmd" id="terminal-cmd-display">open -a OSXTrafficStats</span>
                 <span class="terminal-cursor"></span>
               </div>
 
-              <!-- Tab Panel: TABLE (Default) -->
+              <!-- Tab Panel: STATUS (Default Table) -->
               <div class="tab-content active" id="tab-table">
                 <div class="terminal-table-container">
                   <table class="terminal-table">
                     <thead>
                       <tr>
                         <th>IFACE</th>
-                        <th>RX/s</th>
-                        <th>TX/s</th>
-                        <th>TOTAL RX</th>
-                        <th>TOTAL TX</th>
-                        <th>PKTS/s</th>
+                        <th>DOWNLOAD (RX)</th>
+                        <th>UPLOAD (TX)</th>
+                        <th>SESSION RX</th>
+                        <th>SESSION TX</th>
+                        <th>LATENCY</th>
                       </tr>
                     </thead>
                     <tbody id="live-table-body">
@@ -117,9 +117,9 @@
                         <td class="col-iface"><span class="iface-dot"></span>en0 (Wi-Fi)</td>
                         <td class="col-rx rate-green" id="stat-rx">↓ 3.8 MB/s</td>
                         <td class="col-tx rate-cyan" id="stat-tx">↑ 412 KB/s</td>
-                        <td class="col-tot-rx" id="stat-tot-rx">14.82 GB</td>
-                        <td class="col-tot-tx" id="stat-tot-tx">3.24 GB</td>
-                        <td class="col-pkts" id="stat-pkts">2,410</td>
+                        <td class="col-tot-rx" id="stat-tot-rx">2.14 GB</td>
+                        <td class="col-tot-tx" id="stat-tot-tx">480.2 MB</td>
+                        <td class="col-pkts" id="stat-ping"><span class="ping-icon">⚡</span> 6.7 ms (Excellent)</td>
                       </tr>
                       <tr class="dim-row">
                         <td class="col-iface"><span class="iface-dot dim"></span>awdl0 (AirDrop)</td>
@@ -127,7 +127,7 @@
                         <td class="col-tx">0 KB/s</td>
                         <td class="col-tot-rx">128.4 MB</td>
                         <td class="col-tot-tx">45.2 MB</td>
-                        <td class="col-pkts">0</td>
+                        <td class="col-pkts">—</td>
                       </tr>
                       <tr class="dim-row">
                         <td class="col-iface"><span class="iface-dot dim"></span>lo0 (Loopback)</td>
@@ -135,7 +135,7 @@
                         <td class="col-tx">48 KB/s</td>
                         <td class="col-tot-rx">892.1 MB</td>
                         <td class="col-tot-tx">892.1 MB</td>
-                        <td class="col-pkts">142</td>
+                        <td class="col-pkts">—</td>
                       </tr>
                     </tbody>
                   </table>
@@ -144,15 +144,15 @@
                 <!-- Animated Bandwidth Cap Indicator -->
                 <div class="bandwidth-cap-module">
                   <div class="cap-header">
-                    <span class="cap-label">Monthly Data Cap Sentinel</span>
-                    <span class="cap-metric" id="cap-percent-label">42% (210 GB / 500 GB)</span>
+                    <span class="cap-label">Session Data Cap Sentinel</span>
+                    <span class="cap-metric" id="cap-percent-label">42% (2.1 GB / 5.0 GB Session Cap)</span>
                   </div>
                   <div class="cap-bar-ascii">
                     <span class="cap-bracket">[</span>
                     <span class="cap-segments" id="cap-segments-visual">|||||||||||||||||||||||||</span>
                     <span class="cap-empty" id="cap-empty-visual">...................................</span>
                     <span class="cap-bracket">]</span>
-                    <span class="cap-highlight">42% Bandwidth Cap</span>
+                    <span class="cap-highlight">42% Data Cap</span>
                   </div>
                 </div>
 
@@ -167,52 +167,151 @@
                 </div>
               </div>
 
-              <!-- Tab Panel: JSON -->
-              <div class="tab-content" id="tab-json">
-                <pre class="code-block json-block"><code><span class="json-punct">{</span>
-  <span class="json-key">"timestamp"</span>: <span class="json-str">"2026-10-04T19:42:00Z"</span>,
-  <span class="json-key">"interface"</span>: <span class="json-str">"en0"</span>,
-  <span class="json-key">"rates"</span>: <span class="json-punct">{</span>
-    <span class="json-key">"rx_bytes_per_sec"</span>: <span class="json-num">3984588</span>,
-    <span class="json-key">"tx_bytes_per_sec"</span>: <span class="json-num">421888</span>,
-    <span class="json-key">"packets_per_sec"</span>: <span class="json-num">2410</span>
-  <span class="json-punct">}</span>,
-  <span class="json-key">"totals"</span>: <span class="json-punct">{</span>
-    <span class="json-key">"rx_bytes"</span>: <span class="json-num">15912847360</span>,
-    <span class="json-key">"tx_bytes"</span>: <span class="json-num">3478921216</span>
-  <span class="json-punct">}</span>,
-  <span class="json-key">"data_cap"</span>: <span class="json-punct">{</span>
-    <span class="json-key">"limit_bytes"</span>: <span class="json-num">536870912000</span>,
-    <span class="json-key">"used_percent"</span>: <span class="json-num">42.0</span>,
-    <span class="json-key">"status"</span>: <span class="json-str">"NORMAL"</span>
-  <span class="json-punct">}</span>
-<span class="json-punct">}</span></code></pre>
+              <!-- Tab Panel: HUD GRAPH (Real Floating Cocoa Window Preview) -->
+              <div class="tab-content" id="tab-graph">
+                <div class="hud-graph-mockup">
+                  <div class="hud-top-bar">
+                    <div class="hud-speed-badges">
+                      <span class="hud-dot dot-orange"></span>
+                      <span class="hud-label">Upload: <strong class="text-orange">↑ 412 KB/s</strong> (Peak: 12.4 MB/s)</span>
+                      <span class="hud-dot dot-cyan"></span>
+                      <span class="hud-label">Download: <strong class="text-cyan">↓ 3.8 MB/s</strong> (Peak: 48.2 MB/s)</span>
+                    </div>
+                    <div class="hud-timeframe-controls">
+                      <button class="hud-btn active">1m</button>
+                      <button class="hud-btn">5m</button>
+                      <button class="hud-btn">15m</button>
+                      <button class="hud-btn btn-reset">Reset Peaks</button>
+                    </div>
+                  </div>
+
+                  <div class="hud-canvas-container">
+                    <svg viewBox="0 0 600 130" class="hud-svg" preserveAspectRatio="none">
+                      <!-- Grid lines -->
+                      <line x1="0" y1="20" x2="600" y2="20" stroke="rgba(255,255,255,0.08)" stroke-dasharray="3,3" />
+                      <line x1="0" y1="65" x2="600" y2="65" stroke="rgba(255,255,255,0.08)" stroke-dasharray="3,3" />
+                      <line x1="0" y1="110" x2="600" y2="110" stroke="rgba(255,255,255,0.08)" />
+
+                      <!-- Download Area & Line (Cyan) -->
+                      <defs>
+                        <linearGradient id="cyanGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stop-color="#06b6d4" stop-opacity="0.35"/>
+                          <stop offset="100%" stop-color="#06b6d4" stop-opacity="0.02"/>
+                        </linearGradient>
+                        <linearGradient id="amberGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.30"/>
+                          <stop offset="100%" stop-color="#f59e0b" stop-opacity="0.02"/>
+                        </linearGradient>
+                      </defs>
+                      <path d="M 0,110 Q 50,105 100,90 T 200,60 T 300,75 T 400,30 T 500,45 T 600,35 L 600,110 Z" fill="url(#cyanGrad)" />
+                      <path d="M 0,110 Q 50,105 100,90 T 200,60 T 300,75 T 400,30 T 500,45 T 600,35" fill="none" stroke="#06b6d4" stroke-width="2" />
+                      <circle cx="600" cy="35" r="3.5" fill="#06b6d4" />
+
+                      <!-- Upload Area & Line (Amber) -->
+                      <path d="M 0,110 Q 60,108 120,100 T 240,95 T 360,80 T 480,92 T 600,78 L 600,110 Z" fill="url(#amberGrad)" />
+                      <path d="M 0,110 Q 60,108 120,100 T 240,95 T 360,80 T 480,92 T 600,78" fill="none" stroke="#f59e0b" stroke-width="2" />
+                      <circle cx="600" cy="78" r="3.5" fill="#f59e0b" />
+                    </svg>
+                  </div>
+
+                  <div class="hud-bottom-bar">
+                    <span class="hud-time">-60s</span>
+                    <span class="hud-time">-30s</span>
+                    <span class="hud-time">Now</span>
+                  </div>
+                </div>
               </div>
 
-              <!-- Tab Panel: CSV -->
-              <div class="tab-content" id="tab-csv">
-                <pre class="code-block csv-block"><code><span class="csv-header">timestamp,interface,rx_bps,tx_bps,total_rx,total_tx,packets_s</span>
-2026-10-04T19:42:00Z,en0,3984588,421888,15912847360,3478921216,2410
-2026-10-04T19:42:01Z,en0,4120934,440120,15916968294,3479361336,2528
-2026-10-04T19:42:02Z,en0,3874112,398760,15920842406,3479760096,2385
-2026-10-04T19:42:03Z,en0,4290140,465800,15925132546,3480225896,2614</code></pre>
+              <!-- Tab Panel: TOP APPS (nettop Process Attribution) -->
+              <div class="tab-content" id="tab-apps">
+                <div class="terminal-table-container">
+                  <table class="terminal-table">
+                    <thead>
+                      <tr>
+                        <th>PID</th>
+                        <th>APPLICATION</th>
+                        <th>DOWNLOAD (RX)</th>
+                        <th>UPLOAD (TX)</th>
+                        <th>TOTAL RATE</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr class="active-row">
+                        <td>54120</td>
+                        <td class="col-iface"><span class="iface-dot"></span>Firefox.app</td>
+                        <td class="rate-green">↓ 2.6 MB/s</td>
+                        <td class="rate-cyan">↑ 180 KB/s</td>
+                        <td>2.78 MB/s</td>
+                      </tr>
+                      <tr class="active-row">
+                        <td>53890</td>
+                        <td class="col-iface"><span class="iface-dot"></span>Discord.app</td>
+                        <td class="rate-green">↓ 740 KB/s</td>
+                        <td class="rate-cyan">↑ 42 KB/s</td>
+                        <td>782 KB/s</td>
+                      </tr>
+                      <tr class="active-row">
+                        <td>55210</td>
+                        <td class="col-iface"><span class="iface-dot"></span>git-lfs</td>
+                        <td class="rate-green">↓ 12 KB/s</td>
+                        <td class="rate-cyan">↑ 380 KB/s</td>
+                        <td>392 KB/s</td>
+                      </tr>
+                      <tr class="dim-row">
+                        <td>51400</td>
+                        <td class="col-iface"><span class="iface-dot dim"></span>Spotify.app</td>
+                        <td>↓ 160 KB/s</td>
+                        <td>↑ 8 KB/s</td>
+                        <td>168 KB/s</td>
+                      </tr>
+                      <tr class="dim-row">
+                        <td>00380</td>
+                        <td class="col-iface"><span class="iface-dot dim"></span>WindowServer</td>
+                        <td>↓ 45 KB/s</td>
+                        <td>↑ 15 KB/s</td>
+                        <td>60 KB/s</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div class="proc-attribution-footnote">
+                  <span>⚡ Sourced directly from macOS kernel socket attribution via <code class="inline-code">nettop</code></span>
+                </div>
               </div>
 
-              <!-- Tab Panel: --help -->
-              <div class="tab-content" id="tab-help">
-                <pre class="code-block help-block"><code>Usage: osx-traffic-stats [options]
+              <!-- Tab Panel: MENU BAR (Real Dropdown Structure Preview) -->
+              <div class="tab-content" id="tab-menubar">
+                <div class="menubar-mockup">
+                  <div class="macos-menubar-strip">
+                    <span class="apple-icon"></span>
+                    <span class="menubar-app-active">↑ 412 KB/s  ↓ 3.8 MB/s  [ ▂▃▅█]</span>
+                    <span class="menubar-spacer"></span>
+                    <span class="menubar-sys-icon">⚡ 7 ms</span>
+                    <span class="menubar-sys-icon">Sun 19:42</span>
+                  </div>
 
-Real-time macOS menu bar network traffic monitor and CLI engine.
-
-Options:
-  -i, --interface &lt;name&gt;   Specific interface to monitor (default: active physical)
-  -r, --interval &lt;duration&gt; Refresh interval (1s, 2s, 5s) [default: 1s]
-  -j, --json               Output raw JSON lines for pipelines and Prometheus
-  -c, --csv                Stream comma-separated metrics to stdout
-  --data-cap &lt;size&gt;        Data cap threshold with native alerts (e.g. 500GB, 1TB)
-  --graph                  Launch with floating Cocoa realtime traffic HUD
-  -v, --version            Display version information and exit
-  -h, --help               Print this usage reference</code></pre>
+                  <div class="menubar-dropdown">
+                    <div class="menu-item bold">Upload:   ↑ 412 KB/s   [ ▂▃▅█]</div>
+                    <div class="menu-item bold">Download: ↓ 3.8 MB/s   [ ▂▃▅█]</div>
+                    <div class="menu-item highlight">⚡ Ping: 6.7 ms (Excellent)</div>
+                    <div class="menu-separator"></div>
+                    <div class="menu-item dim">Session Upload:   480.2 MB</div>
+                    <div class="menu-item dim">Session Download: 2.14 GB</div>
+                    <div class="menu-item dim">Lifetime Upload:  42.1 GB</div>
+                    <div class="menu-item dim">Lifetime Download: 189.4 GB</div>
+                    <div class="menu-item action">↺ Reset Session Stats</div>
+                    <div class="menu-item action">↺ Reset Peak Speeds</div>
+                    <div class="menu-separator"></div>
+                    <div class="menu-item submenu">▶ Network Interface (Wi-Fi en0)</div>
+                    <div class="menu-item submenu">▶ Display Options (Bytes, Standard, Both)</div>
+                    <div class="menu-item submenu">▶ Refresh Rate (Normal 1.0s)</div>
+                    <div class="menu-item submenu">▶ Data Cap Alert (5 GB)</div>
+                    <div class="menu-item submenu">▶ Top Active Apps (Firefox, Discord)</div>
+                    <div class="menu-separator"></div>
+                    <div class="menu-item">Show Traffic Graph (HUD Window)</div>
+                    <div class="menu-item checked">✓ Launch at Login</div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -222,7 +321,7 @@ Options:
         <div class="install-pill-container">
           <div class="install-pill">
             <span class="pill-prompt">$</span>
-            <input type="text" readonly value="brew install smford/tap/osx-traffic-stats" class="pill-input" id="install-cmd-input" aria-label="Homebrew install command">
+            <input type="text" readonly value="brew install --cask smford/tap/osx-traffic-stats" class="pill-input" id="install-cmd-input" aria-label="Homebrew install command">
             <button type="button" class="btn-copy" id="btn-copy-install" aria-label="Copy install command" title="Copy to clipboard">
               <svg class="icon-copy" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
@@ -233,8 +332,8 @@ Options:
           </div>
 
           <div class="install-variants">
-            <span class="variant-hint">Prefer native GUI menu bar app?</span>
-            <button type="button" class="link-variant" id="btn-toggle-cask">brew install --cask smford/tap/osx-traffic-stats</button>
+            <span class="variant-hint">Prefer formula install?</span>
+            <button type="button" class="link-variant" id="btn-toggle-cask">brew install smford/tap/osx-traffic-stats</button>
           </div>
         </div>
 
@@ -249,7 +348,7 @@ Options:
                 <span class="bracket">]</span>
               </div>
               <p class="badge-desc">
-                100% offline and private. No cloud phone-homes, zero third-party trackers, no crash analytics.
+                100% offline &amp; private. No cloud phone-homes, zero third-party analytics, and no tracking of any kind.
               </p>
             </div>
           </div>
@@ -259,11 +358,11 @@ Options:
             <div class="card-inner">
               <div class="badge-header">
                 <span class="bracket">[</span>
-                <span class="badge-title">Native C / Sysctl</span>
+                <span class="badge-title">Kernel Sysctl</span>
                 <span class="bracket">]</span>
               </div>
               <p class="badge-desc">
-                Reads direct Darwin kernel network counters via sysctl and BPF sockets. Zero Electron, zero Python overhead.
+                Samples Darwin kernel network counters via native sysctl (<code class="inline-code">NET_RT_IFLIST2</code>). Zero Electron, zero web runtime.
               </p>
             </div>
           </div>
@@ -273,11 +372,11 @@ Options:
             <div class="card-inner">
               <div class="badge-header">
                 <span class="bracket">[</span>
-                <span class="badge-title">&lt; 4MB RSS Memory</span>
+                <span class="badge-title">&lt; 1% CPU Usage</span>
                 <span class="bracket">]</span>
               </div>
               <p class="badge-desc">
-                Microscopic footprint. Idles in macOS menu bar without battery penalty, thermal throttling, or CPU wakeups.
+                Idles silently in the macOS menu bar at 0.0%–0.5% CPU. Minimal energy impact with zero battery drain.
               </p>
             </div>
           </div>
@@ -289,8 +388,8 @@ Options:
     <section class="features-section" id="features">
       <div class="container">
         <div class="section-header">
-          <h2 class="section-title">Engineered For Developers &amp; Power Users</h2>
-          <p class="section-subtitle">Everything you need to monitor macOS network throughput without bloated helper daemons.</p>
+          <h2 class="section-title">Engineered For macOS Power Users</h2>
+          <p class="section-subtitle">Real-time network observability right in your menu bar, built natively in Go and Cocoa AppKit.</p>
         </div>
 
         <div class="features-grid">
@@ -303,7 +402,7 @@ Options:
             </div>
             <h3 class="feature-heading">Floating Cocoa HUD Graph</h3>
             <p class="feature-text">
-              Real-time 60-point hardware-accelerated traffic graphs with 1m, 5m, and 15m intervals, always-on-top mode, and peak tracking.
+              Real-time 60-point dual-line traffic graph with 1m, 5m, and 15m intervals, peak speed records, corner snapping, and opacity presets.
             </p>
           </div>
 
@@ -314,9 +413,9 @@ Options:
                 <polyline points="12 6 12 12 16 14"/>
               </svg>
             </div>
-            <h3 class="feature-heading">Data Cap Sentinel</h3>
+            <h3 class="feature-heading">Session Data Cap Sentinel</h3>
             <p class="feature-text">
-              Configure daily, weekly, or monthly bandwidth quotas. Receive native macOS Notification Center alerts at 75%, 90%, and 100%.
+              Preset session bandwidth limits (1 GB, 2 GB, 5 GB, 10 GB, 20 GB). Triggers native macOS notifications and sound alerts when reached.
             </p>
           </div>
 
@@ -330,7 +429,7 @@ Options:
             </div>
             <h3 class="feature-heading">Process Attribution</h3>
             <p class="feature-text">
-              Integrates with macOS <code class="inline-code">nettop</code> to reveal top network-consuming applications directly in the menu bar and HUD.
+              Integrates with macOS <code class="inline-code">nettop</code> to reveal the top network-consuming applications directly in the menu bar and HUD.
             </p>
           </div>
 
@@ -342,20 +441,19 @@ Options:
             </div>
             <h3 class="feature-heading">Unicode Sparklines</h3>
             <p class="feature-text">
-              Live transfer rates rendered as sleek Unicode sparklines directly in your menu bar beside the system clock.
+              Live transfer rates rendered as sleek Unicode sparklines directly in your menu bar beside the system clock with zero layout shift.
             </p>
           </div>
 
           <div class="feature-card">
             <div class="feature-icon icon-emerald">
               <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="4 17 10 11 4 5"/>
-                <line x1="12" y1="19" x2="20" y2="19"/>
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
               </svg>
             </div>
-            <h3 class="feature-heading">Scriptable Pipelines</h3>
+            <h3 class="feature-heading">Ping &amp; Latency Indicator</h3>
             <p class="feature-text">
-              Pipe formatted JSON or CSV metrics into <code class="inline-code">jq</code>, Telegraf, VictoriaMetrics, or terminal dashboards with ease.
+              Continuous round-trip ICMP ping monitoring to Cloudflare/Google DNS with live millisecond latency and network quality status.
             </p>
           </div>
 
@@ -365,9 +463,9 @@ Options:
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
               </svg>
             </div>
-            <h3 class="feature-heading">Gatekeeper &amp; Universal</h3>
+            <h3 class="feature-heading">Universal &amp; Gatekeeper-Ready</h3>
             <p class="feature-text">
-              Built natively for Apple Silicon (M1/M2/M3/M4) and Intel x86_64, ad-hoc signed, and ready for clean Homebrew Cask installation.
+              Built natively for Apple Silicon (M1–M4) and Intel x86_64, ad-hoc signed, with automated Gatekeeper quarantine removal in Homebrew.
             </p>
           </div>
         </div>
@@ -378,8 +476,8 @@ Options:
     <section class="docs-section" id="docs">
       <div class="container">
         <div class="section-header">
-          <h2 class="section-title">Quick Start &amp; Documentation</h2>
-          <p class="section-subtitle">Get running in seconds with Homebrew, standalone binary, or Go compiler.</p>
+          <h2 class="section-title">Quick Start &amp; Installation</h2>
+          <p class="section-subtitle">Get running in seconds with Homebrew Cask, pre-built binary, or building from source.</p>
         </div>
 
         <div class="docs-grid">
@@ -389,7 +487,7 @@ Options:
               <span class="method-tag">RECOMMENDED</span>
               <h4>Homebrew Cask (Menu Bar App)</h4>
             </div>
-            <p class="docs-card-desc">Installs the native <code class="inline-code">OSXTrafficStats.app</code> bundle into <code class="inline-code">/Applications</code>.</p>
+            <p class="docs-card-desc">Installs the native <code class="inline-code">OSXTrafficStats.app</code> bundle into <code class="inline-code">/Applications</code>:</p>
             <div class="code-snippet">
               <code>brew install --cask smford/tap/osx-traffic-stats</code>
               <button class="btn-mini-copy" data-copy="brew install --cask smford/tap/osx-traffic-stats" aria-label="Copy command">📋</button>
@@ -399,10 +497,10 @@ Options:
           <!-- Install Card: Homebrew Formula -->
           <div class="docs-card">
             <div class="docs-card-header">
-              <span class="method-tag tag-cyan">CLI UTILITY</span>
-              <h4>Homebrew Formula (Terminal CLI)</h4>
+              <span class="method-tag tag-cyan">STANDALONE BINARY</span>
+              <h4>Homebrew Formula</h4>
             </div>
-            <p class="docs-card-desc">Installs the command-line binary into your <code class="inline-code">PATH</code> for headless scripting.</p>
+            <p class="docs-card-desc">Installs the universal binary into your Homebrew bin directory:</p>
             <div class="code-snippet">
               <code>brew install smford/tap/osx-traffic-stats</code>
               <button class="btn-mini-copy" data-copy="brew install smford/tap/osx-traffic-stats" aria-label="Copy command">📋</button>
@@ -412,14 +510,10 @@ Options:
           <!-- Run via LaunchAgent -->
           <div class="docs-card">
             <div class="docs-card-header">
-              <span class="method-tag">SYSTEM INTEGRATION</span>
+              <span class="method-tag">BACKGROUND AUTORUN</span>
               <h4>Launch at macOS Login</h4>
             </div>
-            <p class="docs-card-desc">Enable background auto-start via native launchd user agent from the menu item or command line:</p>
-            <div class="code-snippet">
-              <code>osx-traffic-stats --install-service</code>
-              <button class="btn-mini-copy" data-copy="osx-traffic-stats --install-service" aria-label="Copy command">📋</button>
-            </div>
+            <p class="docs-card-desc">Toggle <strong>Launch at Login</strong> directly in the menu dropdown to automatically create and manage your user LaunchAgent at <code class="inline-code">~/Library/LaunchAgents/com.smford.osx-traffic-stats.plist</code>.</p>
           </div>
 
           <!-- Build from Source -->
@@ -428,10 +522,10 @@ Options:
               <span class="method-tag tag-cyan">DEVELOPERS</span>
               <h4>Build from Source</h4>
             </div>
-            <p class="docs-card-desc">Compile a universal binary locally using Go 1.22+ and Xcode Command Line Tools:</p>
+            <p class="docs-card-desc">Compile locally using Go 1.21+ and Xcode Command Line Tools:</p>
             <div class="code-snippet">
-              <code>git clone https://github.com/smford/osx-traffic-stats.git &amp;&amp; make package</code>
-              <button class="btn-mini-copy" data-copy="git clone https://github.com/smford/osx-traffic-stats.git && make package" aria-label="Copy command">📋</button>
+              <code>git clone https://github.com/smford/osx-traffic-stats.git &amp;&amp; make install</code>
+              <button class="btn-mini-copy" data-copy="git clone https://github.com/smford/osx-traffic-stats.git && make install" aria-label="Copy command">📋</button>
             </div>
           </div>
         </div>

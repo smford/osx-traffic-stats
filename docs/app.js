@@ -114,10 +114,10 @@ function initTerminalTabs() {
   const cmdDisplay = document.getElementById('terminal-cmd-display');
 
   const commands = {
-    table: 'osx-traffic-stats --interface en0 --interval 1s',
-    json: 'osx-traffic-stats --interface en0 --json',
-    csv: 'osx-traffic-stats --interface en0 --csv',
-    help: 'osx-traffic-stats --help'
+    table: 'open -a OSXTrafficStats  # Menu bar status daemon',
+    graph: 'open -a OSXTrafficStats --args --graph  # Floating HUD window',
+    apps: 'nettop -P -x -L 1 -J bytes_in,bytes_out  # Kernel socket attribution',
+    menubar: 'defaults read com.smford.osx-traffic-stats  # Menu bar configuration'
   };
 
   tabs.forEach((tab) => {
@@ -167,12 +167,12 @@ function initInstallPill() {
 
   if (toggleCask && input) {
     toggleCask.addEventListener('click', () => {
-      if (input.value === cliCmd) {
-        input.value = caskCmd;
-        toggleCask.textContent = cliCmd;
-      } else {
+      if (input.value === caskCmd) {
         input.value = cliCmd;
         toggleCask.textContent = caskCmd;
+      } else {
+        input.value = caskCmd;
+        toggleCask.textContent = cliCmd;
       }
     });
   }
@@ -212,7 +212,7 @@ function copyToClipboard(text, btnElement) {
 }
 
 /* ==========================================================================
-   4. Live Metrics Simulation (TABLE Tab)
+   4. Live Metrics Simulation (STATUS Tab)
    ========================================================================== */
 
 function startLiveMetricsSimulation() {
@@ -220,12 +220,12 @@ function startLiveMetricsSimulation() {
   const txEl = document.getElementById('stat-tx');
   const totRxEl = document.getElementById('stat-tot-rx');
   const totTxEl = document.getElementById('stat-tot-tx');
-  const pktsEl = document.getElementById('stat-pkts');
+  const pingEl = document.getElementById('stat-ping');
 
   if (!rxEl || !txEl) return;
 
-  let totalRxGb = 14.82;
-  let totalTxGb = 3.24;
+  let totalRxGb = 2.14;
+  let totalTxMb = 480.2;
 
   setInterval(() => {
     // Only update if table tab is currently visible
@@ -235,15 +235,18 @@ function startLiveMetricsSimulation() {
     // Simulate fluctuating bandwidth
     const rxMb = (Math.random() * 2.8 + 2.1).toFixed(1);
     const txKb = Math.floor(Math.random() * 320 + 260);
-    const pkts = (Math.floor(Math.random() * 600) + 2100).toLocaleString();
+    const pingMs = (Math.random() * 2.4 + 5.6).toFixed(1);
 
     rxEl.textContent = `↓ ${rxMb} MB/s`;
     txEl.textContent = `↑ ${txKb} KB/s`;
-    pktsEl.textContent = pkts;
+    if (pingEl) {
+      pingEl.innerHTML = `<span class="ping-icon">⚡</span> ${pingMs} ms (Excellent)`;
+    }
 
-    totalRxGb += 0.003;
-    totalTxGb += 0.0004;
+    totalRxGb += 0.002;
+    totalTxMb += 0.4;
     totRxEl.textContent = `${totalRxGb.toFixed(2)} GB`;
-    totTxEl.textContent = `${totalTxGb.toFixed(2)} GB`;
+    totTxEl.textContent = `${totalTxMb.toFixed(1)} MB`;
   }, 1600);
 }
+
