@@ -72,3 +72,29 @@ func TestFormatProcessItem(t *testing.T) {
 		t.Errorf("unexpected format: %s", item)
 	}
 }
+
+func TestFormatTopAppsSummary(t *testing.T) {
+	// Empty case
+	procMutex.Lock()
+	cachedTopProcs = nil
+	procMutex.Unlock()
+
+	summary := FormatTopAppsSummary(3)
+	if summary != "No active network traffic" {
+		t.Errorf("expected 'No active network traffic', got %q", summary)
+	}
+
+	// Populated case
+	procMutex.Lock()
+	cachedTopProcs = []ProcessTraffic{
+		{Name: "Google Chrome", PID: 101, RateIn: 1024 * 1024, RateOut: 128 * 1024, TotalRate: 1024*1024 + 128*1024},
+		{Name: "curl", PID: 102, RateIn: 500 * 1024, RateOut: 0, TotalRate: 500 * 1024},
+	}
+	procMutex.Unlock()
+
+	summary = FormatTopAppsSummary(3)
+	expected := "Google Chrome: ↓ 1.0 MB/s  ↑ 128 KB/s   •   curl: ↓ 500 KB/s"
+	if summary != expected {
+		t.Errorf("expected %q, got %q", expected, summary)
+	}
+}

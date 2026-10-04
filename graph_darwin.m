@@ -14,8 +14,9 @@ extern void onTrafficGraphClosed(void);
 @property (nonatomic, assign) uint64_t peakUpload;
 @property (nonatomic, assign) uint64_t peakDownload;
 @property (nonatomic, assign) int timeframeSeconds;
+@property (nonatomic, copy) NSString *topAppsSummary;
 
-- (void)addTrafficDataWithUpload:(uint64_t)up download:(uint64_t)down;
+- (void)addTrafficDataWithUpload:(uint64_t)up download:(uint64_t)down topApps:(NSString *)topApps;
 - (void)resetPeaks;
 - (void)setTimeframe:(int)seconds;
 @end
@@ -33,6 +34,7 @@ extern void onTrafficGraphClosed(void);
         memset(_downloadHistory, 0, sizeof(_downloadHistory));
         _count = 0;
         _timeframeSeconds = 60;
+        _topAppsSummary = @"No active network traffic";
     }
     return self;
 }
@@ -55,9 +57,12 @@ extern void onTrafficGraphClosed(void);
     [self setNeedsDisplay:YES];
 }
 
-- (void)addTrafficDataWithUpload:(uint64_t)up download:(uint64_t)down {
+- (void)addTrafficDataWithUpload:(uint64_t)up download:(uint64_t)down topApps:(NSString *)topApps {
     self.currentUpload = up;
     self.currentDownload = down;
+    if (topApps) {
+        self.topAppsSummary = topApps;
+    }
 
     if (up > self.peakUpload) {
         self.peakUpload = up;
@@ -130,10 +135,10 @@ static NSString* formatSpeedObjC(uint64_t bytesPerSec) {
     [downStr drawAtPoint:NSMakePoint(30, 30) withAttributes:downAttrs];
 
     // Plot Dimensions
-    CGFloat leftMargin = 58;
+    CGFloat leftMargin = 74;
     CGFloat rightMargin = 16;
-    CGFloat topMargin = 56;
-    CGFloat bottomMargin = 26;
+    CGFloat topMargin = 58;
+    CGFloat bottomMargin = 62;
 
     NSRect plotRect = NSMakeRect(leftMargin, topMargin,
                                  bounds.size.width - leftMargin - rightMargin,
@@ -200,18 +205,25 @@ static NSString* formatSpeedObjC(uint64_t bytesPerSec) {
     // 100% line & label
     NSString *scaleTopStr = formatSpeedObjC((uint64_t)scaleMax);
     NSSize topStrSize = [scaleTopStr sizeWithAttributes:axisAttrs];
-    [scaleTopStr drawAtPoint:NSMakePoint(leftMargin - topStrSize.width - 6, plotTop - 2) withAttributes:axisAttrs];
+    [scaleTopStr drawAtPoint:NSMakePoint(leftMargin - topStrSize.width - 8, plotTop - 5) withAttributes:axisAttrs];
+
+    NSBezierPath *topGrid = [NSBezierPath bezierPath];
+    [topGrid moveToPoint:NSMakePoint(plotRect.origin.x, plotTop)];
+    [topGrid lineToPoint:NSMakePoint(plotRect.origin.x + plotRect.size.width, plotTop)];
+    CGFloat dash[2] = {3.0, 3.0};
+    [topGrid setLineDash:dash count:2 phase:0.0];
+    [[NSColor colorWithCalibratedWhite:1.0 alpha:0.08] setStroke];
+    [topGrid stroke];
 
     // 50% line & label
     CGFloat midY = plotTop + plotRect.size.height * 0.5;
     NSString *scaleMidStr = formatSpeedObjC((uint64_t)(scaleMax * 0.5));
     NSSize midStrSize = [scaleMidStr sizeWithAttributes:axisAttrs];
-    [scaleMidStr drawAtPoint:NSMakePoint(leftMargin - midStrSize.width - 6, midY - 6) withAttributes:axisAttrs];
+    [scaleMidStr drawAtPoint:NSMakePoint(leftMargin - midStrSize.width - 8, midY - 6) withAttributes:axisAttrs];
 
     NSBezierPath *midGrid = [NSBezierPath bezierPath];
     [midGrid moveToPoint:NSMakePoint(plotRect.origin.x, midY)];
     [midGrid lineToPoint:NSMakePoint(plotRect.origin.x + plotRect.size.width, midY)];
-    CGFloat dash[2] = {3.0, 3.0};
     [midGrid setLineDash:dash count:2 phase:0.0];
     [[NSColor colorWithCalibratedWhite:1.0 alpha:0.10] setStroke];
     [midGrid stroke];
@@ -219,7 +231,7 @@ static NSString* formatSpeedObjC(uint64_t bytesPerSec) {
     // 0 line & label
     NSString *scaleBotStr = @"0 KB/s";
     NSSize botStrSize = [scaleBotStr sizeWithAttributes:axisAttrs];
-    [scaleBotStr drawAtPoint:NSMakePoint(leftMargin - botStrSize.width - 6, plotBottom - 9) withAttributes:axisAttrs];
+    [scaleBotStr drawAtPoint:NSMakePoint(leftMargin - botStrSize.width - 8, plotBottom - 6) withAttributes:axisAttrs];
 
     // X-axis time markings
     NSDictionary *timeAttrs = @{
@@ -228,10 +240,13 @@ static NSString* formatSpeedObjC(uint64_t bytesPerSec) {
     };
     NSString *tLeft = (windowSec == 900) ? @"-15m" : (windowSec == 300 ? @"-5m" : @"-60s");
     NSString *tMid = (windowSec == 900) ? @"-7.5m" : (windowSec == 300 ? @"-2.5m" : @"-30s");
+    NSSize midSize = [tMid sizeWithAttributes:timeAttrs];
+    NSSize nowSize = [@"Now" sizeWithAttributes:timeAttrs];
 
-    [tLeft drawAtPoint:NSMakePoint(plotRect.origin.x, plotBottom + 5) withAttributes:timeAttrs];
-    [tMid drawAtPoint:NSMakePoint(plotRect.origin.x + plotRect.size.width * 0.5 - 12, plotBottom + 5) withAttributes:timeAttrs];
-    [@"Now" drawAtPoint:NSMakePoint(plotRect.origin.x + plotRect.size.width - 24, plotBottom + 5) withAttributes:timeAttrs];
+    CGFloat timeY = plotBottom + 4;
+    [tLeft drawAtPoint:NSMakePoint(plotRect.origin.x, timeY) withAttributes:timeAttrs];
+    [tMid drawAtPoint:NSMakePoint(plotRect.origin.x + plotRect.size.width * 0.5 - midSize.width * 0.5, timeY) withAttributes:timeAttrs];
+    [@"Now" drawAtPoint:NSMakePoint(plotRect.origin.x + plotRect.size.width - nowSize.width, timeY) withAttributes:timeAttrs];
 
     // Compute curve points
     NSPoint downPoints[DISPLAY_POINTS];
@@ -326,6 +341,53 @@ static NSString* formatSpeedObjC(uint64_t bytesPerSec) {
     [upColor setFill];
     [uDot fill];
     [NSGraphicsContext restoreGraphicsState];
+
+    // 3. Top Active Apps Card
+    CGFloat appsY = plotBottom + 20;
+    CGFloat appsH = bounds.size.height - appsY - 8;
+    if (appsH >= 20) {
+        NSRect appsRect = NSMakeRect(leftMargin, appsY, plotRect.size.width, appsH);
+
+        NSBezierPath *appsCard = [NSBezierPath bezierPathWithRoundedRect:appsRect xRadius:4.0 yRadius:4.0];
+        [[NSColor colorWithCalibratedWhite:0.0 alpha:0.35] setFill];
+        [appsCard fill];
+        [[NSColor colorWithCalibratedWhite:1.0 alpha:0.10] setStroke];
+        [appsCard setLineWidth:1.0];
+        [appsCard stroke];
+
+        CGFloat badgeW = 62.0;
+        CGFloat badgeH = 16.0;
+        CGFloat badgeY = appsRect.origin.y + (appsH - badgeH) * 0.5;
+        NSRect badgeRect = NSMakeRect(appsRect.origin.x + 6, badgeY, badgeW, badgeH);
+        NSBezierPath *badge = [NSBezierPath bezierPathWithRoundedRect:badgeRect xRadius:3.0 yRadius:3.0];
+        [[NSColor colorWithCalibratedRed:0.0 green:0.65 blue:1.0 alpha:0.22] setFill];
+        [badge fill];
+
+        NSDictionary *badgeAttrs = @{
+            NSFontAttributeName: [NSFont systemFontOfSize:8.5 weight:NSFontWeightBold],
+            NSForegroundColorAttributeName: [NSColor colorWithCalibratedRed:0.2 green:0.8 blue:1.0 alpha:1.0]
+        };
+        NSString *badgeText = @"TOP APPS";
+        NSSize badgeTextSize = [badgeText sizeWithAttributes:badgeAttrs];
+        [badgeText drawAtPoint:NSMakePoint(badgeRect.origin.x + (badgeW - badgeTextSize.width) * 0.5,
+                                           badgeRect.origin.y + (badgeH - badgeTextSize.height) * 0.5)
+                withAttributes:badgeAttrs];
+
+        NSString *summary = (self.topAppsSummary && self.topAppsSummary.length > 0) ? self.topAppsSummary : @"No active network traffic";
+        CGFloat textX = badgeRect.origin.x + badgeW + 8;
+        CGFloat textW = (appsRect.origin.x + appsRect.size.width) - textX - 8;
+        if (textW > 20) {
+            NSMutableParagraphStyle *para = [[NSMutableParagraphStyle alloc] init];
+            para.lineBreakMode = NSLineBreakByTruncatingTail;
+            NSDictionary *appsAttrs = @{
+                NSFontAttributeName: [NSFont monospacedDigitSystemFontOfSize:9.5 weight:NSFontWeightRegular],
+                NSForegroundColorAttributeName: [NSColor colorWithCalibratedWhite:0.88 alpha:1.0],
+                NSParagraphStyleAttributeName: para
+            };
+            NSRect textRect = NSMakeRect(textX, appsRect.origin.y + (appsH - 14) * 0.5, textW, 16);
+            [summary drawInRect:textRect withAttributes:appsAttrs];
+        }
+    }
 }
 
 @end
@@ -374,7 +436,7 @@ static BOOL currentGraphAlwaysOnTop = YES;
 static void createTrafficGraphPanel(void) {
     if (sharedGraphPanel) return;
 
-    NSRect frame = NSMakeRect(200, 200, 480, 270);
+    NSRect frame = NSMakeRect(200, 200, 520, 310);
     sharedGraphPanel = [[NSPanel alloc] initWithContentRect:frame
                                                   styleMask:NSWindowStyleMaskTitled |
                                                             NSWindowStyleMaskClosable |
@@ -386,7 +448,7 @@ static void createTrafficGraphPanel(void) {
     [sharedGraphPanel setLevel:(currentGraphAlwaysOnTop ? NSFloatingWindowLevel : NSNormalWindowLevel)];
     [sharedGraphPanel setAlphaValue:currentGraphOpacity];
     [sharedGraphPanel setReleasedWhenClosed:NO];
-    [sharedGraphPanel setMinSize:NSMakeSize(380, 220)];
+    [sharedGraphPanel setMinSize:NSMakeSize(440, 260)];
     [sharedGraphPanel setMovableByWindowBackground:YES];
 
     sharedGraphDelegate = [[TrafficGraphWindowDelegate alloc] init];
@@ -405,24 +467,24 @@ static void createTrafficGraphPanel(void) {
 
     sharedControlsTarget = [[GraphControlsTarget alloc] init];
 
-    // Segmented timeframe control in top right
+    // Segmented timeframe control in top right of sharedGraphView (flipped coordinates)
     sharedTimeSegment = [NSSegmentedControl segmentedControlWithLabels:@[@"1m", @"5m", @"15m"]
                                                           trackingMode:NSSegmentSwitchTrackingSelectOne
                                                                 target:sharedControlsTarget
                                                                 action:@selector(timeframeSelected:)];
     sharedTimeSegment.selectedSegment = 0;
-    sharedTimeSegment.frame = NSMakeRect(frame.size.width - 150, 14, 134, 22);
+    sharedTimeSegment.frame = NSMakeRect(frame.size.width - 150, 16, 134, 22);
     sharedTimeSegment.autoresizingMask = NSViewMinXMargin | NSViewMaxYMargin;
-    [vibrantView addSubview:sharedTimeSegment];
+    [sharedGraphView addSubview:sharedTimeSegment];
 
-    // Reset Peaks button
+    // Reset Peaks button in top right of sharedGraphView
     NSButton *resetBtn = [NSButton buttonWithTitle:@"Reset Peaks"
                                             target:sharedControlsTarget
                                             action:@selector(resetPeaksClicked:)];
     [resetBtn setBezelStyle:NSBezelStyleInline];
-    resetBtn.frame = NSMakeRect(frame.size.width - 240, 14, 84, 22);
+    resetBtn.frame = NSMakeRect(frame.size.width - 244, 16, 86, 22);
     resetBtn.autoresizingMask = NSViewMinXMargin | NSViewMaxYMargin;
-    [vibrantView addSubview:resetBtn];
+    [sharedGraphView addSubview:resetBtn];
 }
 
 void toggleTrafficGraphWindow(void) {
@@ -438,10 +500,11 @@ void toggleTrafficGraphWindow(void) {
     });
 }
 
-void updateTrafficGraph(uint64_t upSpeed, uint64_t downSpeed) {
+void updateTrafficGraph(uint64_t upSpeed, uint64_t downSpeed, const char *topAppsSummary) {
+    NSString *apps = topAppsSummary ? [NSString stringWithUTF8String:topAppsSummary] : @"";
     dispatch_async(dispatch_get_main_queue(), ^{
         createTrafficGraphPanel();
-        [sharedGraphView addTrafficDataWithUpload:upSpeed download:downSpeed];
+        [sharedGraphView addTrafficDataWithUpload:upSpeed download:downSpeed topApps:apps];
     });
 }
 

@@ -6,7 +6,7 @@
 #include <stdint.h>
 
 void toggleTrafficGraphWindow(void);
-void updateTrafficGraph(uint64_t upSpeed, uint64_t downSpeed);
+void updateTrafficGraph(uint64_t upSpeed, uint64_t downSpeed, const char *topAppsSummary);
 int isTrafficGraphVisible(void);
 void resetTrafficGraphPeaks(void);
 void setTrafficGraphOpacity(double opacity);

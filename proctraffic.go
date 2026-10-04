@@ -174,3 +174,38 @@ func GetCachedProcessTraffic() []ProcessTraffic {
 func FormatProcessItem(p ProcessTraffic) string {
 	return fmt.Sprintf("%s: ↓ %s  ↑ %s", p.Name, formatSpeed(p.RateIn), formatSpeed(p.RateOut))
 }
+
+// FormatTopAppsSummary returns a concise summary of the top active apps for display on the graph window.
+func FormatTopAppsSummary(maxApps int) string {
+	procs := GetCachedProcessTraffic()
+	if len(procs) == 0 {
+		return "No active network traffic"
+	}
+
+	var parts []string
+	count := 0
+	for _, p := range procs {
+		if p.TotalRate == 0 {
+			continue
+		}
+		var speedStr string
+		if p.RateIn > 0 && p.RateOut > 0 {
+			speedStr = fmt.Sprintf("%s: ↓ %s  ↑ %s", p.Name, formatSpeed(p.RateIn), formatSpeed(p.RateOut))
+		} else if p.RateIn > 0 {
+			speedStr = fmt.Sprintf("%s: ↓ %s", p.Name, formatSpeed(p.RateIn))
+		} else {
+			speedStr = fmt.Sprintf("%s: ↑ %s", p.Name, formatSpeed(p.RateOut))
+		}
+		parts = append(parts, speedStr)
+		count++
+		if count >= maxApps {
+			break
+		}
+	}
+
+	if len(parts) == 0 {
+		return "No active network traffic"
+	}
+
+	return strings.Join(parts, "   •   ")
+}

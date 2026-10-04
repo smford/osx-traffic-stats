@@ -6,10 +6,14 @@ package main
 #cgo CFLAGS: -x objective-c -fobjc-arc
 #cgo LDFLAGS: -framework Cocoa
 
+#include <stdlib.h>
 #include "graph_darwin.h"
 */
 import "C"
-import "sync/atomic"
+import (
+	"sync/atomic"
+	"unsafe"
+)
 
 var isGraphVisible atomic.Bool
 
@@ -37,7 +41,10 @@ func toggleTrafficGraph() {
 }
 
 func updateGraph(upSpeed, downSpeed uint64) {
-	C.updateTrafficGraph(C.uint64_t(upSpeed), C.uint64_t(downSpeed))
+	summary := FormatTopAppsSummary(3)
+	cSummary := C.CString(summary)
+	defer C.free(unsafe.Pointer(cSummary))
+	C.updateTrafficGraph(C.uint64_t(upSpeed), C.uint64_t(downSpeed), cSummary)
 }
 
 func isTrafficGraphVisible() bool {
