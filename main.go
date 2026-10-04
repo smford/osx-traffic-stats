@@ -85,6 +85,20 @@ func onReady() {
 
 	systray.AddSeparator()
 
+	mDataCapMenu := systray.AddMenuItem("Data Cap Alert", "Set cellular/hotspot data usage warnings")
+	type capItemPair struct {
+		bytes uint64
+		item  *systray.MenuItem
+	}
+	var capItems []capItemPair
+
+	for i, opt := range dataCapOptions {
+		subItem := mDataCapMenu.AddSubMenuItemCheckbox(opt.Label, "Warn when session exceeds "+opt.Label, i == 0)
+		capItems = append(capItems, capItemPair{bytes: opt.Bytes, item: subItem})
+	}
+
+	systray.AddSeparator()
+
 	mToggleGraph = systray.AddMenuItem("Show Traffic Graph", "Open a real-time bandwidth graph window")
 
 	systray.AddSeparator()
@@ -103,10 +117,27 @@ func onReady() {
 		for range mReset.ClickedCh {
 			sessionSent.Store(0)
 			sessionRecv.Store(0)
+			resetDataCapAlert()
 			mSessionUp.SetTitle("Session Upload: 0 B")
 			mSessionDown.SetTitle("Session Download: 0 B")
 		}
 	}()
+
+	for _, p := range capItems {
+		pair := p
+		go func() {
+			for range pair.item.ClickedCh {
+				setDataCap(pair.bytes)
+				for _, other := range capItems {
+					if other.bytes == pair.bytes {
+						other.item.Check()
+					} else {
+						other.item.Uncheck()
+					}
+				}
+			}
+		}()
+	}
 
 	go func() {
 		for range mResetPeaks.ClickedCh {
@@ -239,6 +270,7 @@ func monitorTraffic() {
 
 			totalUp := sessionSent.Add(upBytes)
 			totalDown := sessionRecv.Add(downBytes)
+			checkDataCap(totalUp + totalDown)
 
 			upSpeed := formatSpeedDynamic(upBytes, false)
 			downSpeed := formatSpeedDynamic(downBytes, false)
