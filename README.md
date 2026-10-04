@@ -34,6 +34,34 @@ A lightweight macOS menu bar utility that displays real-time network upload and 
 - **Counter Reset Protection**: Handles network interface reconnections and counter rollovers cleanly without underflow spikes.
 - **App Bundle Support**: Easily build and install as a native macOS application bundle (`OSXTrafficStats.app`).
 
+## Installation
+
+### Via Homebrew (Recommended)
+
+Install using the official Homebrew tap:
+
+```bash
+brew install smford/tap/osx-traffic-stats
+```
+
+Or add the tap first and then install:
+
+```bash
+brew tap smford/tap
+brew install osx-traffic-stats
+```
+
+To upgrade:
+
+```bash
+brew update
+brew upgrade osx-traffic-stats
+```
+
+### Pre-built Binaries & App Bundle
+
+Download universal binaries (Apple Silicon & Intel) or the macOS application bundle (`OSXTrafficStats-v*.zip`) from [GitHub Releases](https://github.com/smford/osx-traffic-stats/releases).
+
 ## Prerequisites
 
 - **macOS**: Built specifically for macOS (Darwin).
