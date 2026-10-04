@@ -11,11 +11,15 @@ import (
 var (
 	sessionSent atomic.Uint64
 	sessionRecv atomic.Uint64
+	totalSent   atomic.Uint64
+	totalRecv   atomic.Uint64
 
 	mUploadRate   *systray.MenuItem
 	mDownloadRate *systray.MenuItem
 	mSessionUp    *systray.MenuItem
 	mSessionDown  *systray.MenuItem
+	mTotalUp      *systray.MenuItem
+	mTotalDown    *systray.MenuItem
 	mToggleGraph  *systray.MenuItem
 )
 
@@ -39,6 +43,21 @@ func onReady() {
 	setAccessoryPolicy()
 	configureFixedStatusItem()
 
+	// Restore state from disk if available
+	savedState, _ := loadAppState()
+	if savedState != nil {
+		sessionSent.Store(savedState.SessionSent)
+		sessionRecv.Store(savedState.SessionRecv)
+		totalSent.Store(savedState.TotalSent)
+		totalRecv.Store(savedState.TotalRecv)
+		if savedState.SelectedInterface != "" {
+			setSelectedInterface(savedState.SelectedInterface)
+		}
+		setUnitMode(savedState.UnitMode)
+		setStyleMode(savedState.StyleMode)
+		setDataCap(savedState.DataCapBytes)
+	}
+
 	systray.SetTitle("Loading...")
 	systray.SetTooltip("Bandwidth Monitor")
 
@@ -49,10 +68,15 @@ func onReady() {
 
 	systray.AddSeparator()
 
-	mSessionUp = systray.AddMenuItem("Session Upload: 0 B", "Total uploaded this session")
+	mSessionUp = systray.AddMenuItem(fmt.Sprintf("Session Upload:   %s", formatBytes(sessionSent.Load())), "Total uploaded this session")
 	mSessionUp.Disable()
-	mSessionDown = systray.AddMenuItem("Session Download: 0 B", "Total downloaded this session")
+	mSessionDown = systray.AddMenuItem(fmt.Sprintf("Session Download: %s", formatBytes(sessionRecv.Load())), "Total downloaded this session")
 	mSessionDown.Disable()
+
+	mTotalUp = systray.AddMenuItem(fmt.Sprintf("Lifetime Upload:  %s", formatBytes(totalSent.Load())), "All-time total uploaded")
+	mTotalUp.Disable()
+	mTotalDown = systray.AddMenuItem(fmt.Sprintf("Lifetime Download: %s", formatBytes(totalRecv.Load())), "All-time total downloaded")
+	mTotalDown.Disable()
 
 	mReset := systray.AddMenuItem("Reset Session Stats", "Reset session upload and download counters")
 	mResetPeaks := systray.AddMenuItem("Reset Peak Speeds", "Reset peak upload and download speed records")
@@ -60,7 +84,7 @@ func onReady() {
 	systray.AddSeparator()
 
 	mInterfaceMenu := systray.AddMenuItem("Network Interface", "Select network interface to monitor")
-	mAllIfaces := mInterfaceMenu.AddSubMenuItemCheckbox("All Interfaces", "Monitor all non-loopback network interfaces", true)
+	mAllIfaces := mInterfaceMenu.AddSubMenuItemCheckbox("All Interfaces", "Monitor all non-loopback network interfaces", getSelectedInterface() == "")
 
 	ifaceOptions := listInterfaceOptions()
 	type ifaceItemPair struct {
@@ -70,18 +94,18 @@ func onReady() {
 	var ifaceItems []ifaceItemPair
 
 	for _, opt := range ifaceOptions {
-		subItem := mInterfaceMenu.AddSubMenuItemCheckbox(opt.DisplayName, "Monitor "+opt.Device, false)
+		subItem := mInterfaceMenu.AddSubMenuItemCheckbox(opt.DisplayName, "Monitor "+opt.Device, opt.Device == getSelectedInterface())
 		ifaceItems = append(ifaceItems, ifaceItemPair{device: opt.Device, item: subItem})
 	}
 
 	systray.AddSeparator()
 
 	mDisplayMenu := systray.AddMenuItem("Display Options", "Configure speed units and layout style")
-	mUnitBytes := mDisplayMenu.AddSubMenuItemCheckbox("Units: Bytes (KB/s, MB/s)", "Display speed in bytes per second", true)
-	mUnitBits := mDisplayMenu.AddSubMenuItemCheckbox("Units: Bits (Kbps, Mbps)", "Display speed in bits per second", false)
+	mUnitBytes := mDisplayMenu.AddSubMenuItemCheckbox("Units: Bytes (KB/s, MB/s)", "Display speed in bytes per second", getUnitMode() == UnitBytes)
+	mUnitBits := mDisplayMenu.AddSubMenuItemCheckbox("Units: Bits (Kbps, Mbps)", "Display speed in bits per second", getUnitMode() == UnitBits)
 
-	mStyleStandard := mDisplayMenu.AddSubMenuItemCheckbox("Style: Standard", "Full bandwidth labels", true)
-	mStyleCompact := mDisplayMenu.AddSubMenuItemCheckbox("Style: Compact (Notch-Friendly)", "Compact bandwidth labels", false)
+	mStyleStandard := mDisplayMenu.AddSubMenuItemCheckbox("Style: Standard", "Full bandwidth labels", getStyleMode() == StyleStandard)
+	mStyleCompact := mDisplayMenu.AddSubMenuItemCheckbox("Style: Compact (Notch-Friendly)", "Compact bandwidth labels", getStyleMode() == StyleCompact)
 
 	systray.AddSeparator()
 
@@ -92,8 +116,9 @@ func onReady() {
 	}
 	var capItems []capItemPair
 
-	for i, opt := range dataCapOptions {
-		subItem := mDataCapMenu.AddSubMenuItemCheckbox(opt.Label, "Warn when session exceeds "+opt.Label, i == 0)
+	currentCap := getDataCap()
+	for _, opt := range dataCapOptions {
+		subItem := mDataCapMenu.AddSubMenuItemCheckbox(opt.Label, "Warn when session exceeds "+opt.Label, opt.Bytes == currentCap)
 		capItems = append(capItems, capItemPair{bytes: opt.Bytes, item: subItem})
 	}
 
@@ -118,8 +143,9 @@ func onReady() {
 			sessionSent.Store(0)
 			sessionRecv.Store(0)
 			resetDataCapAlert()
-			mSessionUp.SetTitle("Session Upload: 0 B")
+			mSessionUp.SetTitle("Session Upload:   0 B")
 			mSessionDown.SetTitle("Session Download: 0 B")
+			persistCurrentState()
 		}
 	}()
 
@@ -135,6 +161,7 @@ func onReady() {
 						other.item.Uncheck()
 					}
 				}
+				persistCurrentState()
 			}
 		}()
 	}
@@ -152,6 +179,7 @@ func onReady() {
 			for _, p := range ifaceItems {
 				p.item.Uncheck()
 			}
+			persistCurrentState()
 		}
 	}()
 
@@ -168,6 +196,7 @@ func onReady() {
 						other.item.Uncheck()
 					}
 				}
+				persistCurrentState()
 			}
 		}()
 	}
@@ -196,6 +225,7 @@ func onReady() {
 			setUnitMode(UnitBytes)
 			mUnitBytes.Check()
 			mUnitBits.Uncheck()
+			persistCurrentState()
 		}
 	}()
 
@@ -204,6 +234,7 @@ func onReady() {
 			setUnitMode(UnitBits)
 			mUnitBits.Check()
 			mUnitBytes.Uncheck()
+			persistCurrentState()
 		}
 	}()
 
@@ -212,6 +243,7 @@ func onReady() {
 			setStyleMode(StyleStandard)
 			mStyleStandard.Check()
 			mStyleCompact.Uncheck()
+			persistCurrentState()
 		}
 	}()
 
@@ -220,6 +252,7 @@ func onReady() {
 			setStyleMode(StyleCompact)
 			mStyleCompact.Check()
 			mStyleStandard.Uncheck()
+			persistCurrentState()
 		}
 	}()
 
@@ -242,6 +275,7 @@ func monitorTraffic() {
 	var initialized bool
 	var lastInterface string
 	var upHistory, downHistory []uint64
+	var tickCount int
 	const sparklineWidth = 10
 
 	ticker := time.NewTicker(1 * time.Second)
@@ -270,6 +304,8 @@ func monitorTraffic() {
 
 			totalUp := sessionSent.Add(upBytes)
 			totalDown := sessionRecv.Add(downBytes)
+			allTimeUp := totalSent.Add(upBytes)
+			allTimeDown := totalRecv.Add(downBytes)
 			checkDataCap(totalUp + totalDown)
 
 			upSpeed := formatSpeedDynamic(upBytes, false)
@@ -293,12 +329,19 @@ func monitorTraffic() {
 
 			// Updates the text right next to the macOS clock with fixed-width layout
 			systray.SetTitle(fmt.Sprintf("↑ %s  ↓ %s", upSpeedFixed, downSpeedFixed))
-			systray.SetTooltip(fmt.Sprintf("Bandwidth Monitor\n↑ %s [%s] (Total: %s)\n↓ %s [%s] (Total: %s)", upSpeed, upSpark, formatBytes(totalUp), downSpeed, downSpark, formatBytes(totalDown)))
+			systray.SetTooltip(fmt.Sprintf("Bandwidth Monitor\n↑ %s [%s] (Session: %s, Total: %s)\n↓ %s [%s] (Session: %s, Total: %s)", upSpeed, upSpark, formatBytes(totalUp), formatBytes(allTimeUp), downSpeed, downSpark, formatBytes(totalDown), formatBytes(allTimeDown)))
 
 			mUploadRate.SetTitle(fmt.Sprintf("Upload:   ↑ %-8s  [%s]", upSpeed, upSpark))
 			mDownloadRate.SetTitle(fmt.Sprintf("Download: ↓ %-8s  [%s]", downSpeed, downSpark))
 			mSessionUp.SetTitle(fmt.Sprintf("Session Upload:   %s", formatBytes(totalUp)))
 			mSessionDown.SetTitle(fmt.Sprintf("Session Download: %s", formatBytes(totalDown)))
+			mTotalUp.SetTitle(fmt.Sprintf("Lifetime Upload:  %s", formatBytes(allTimeUp)))
+			mTotalDown.SetTitle(fmt.Sprintf("Lifetime Download: %s", formatBytes(allTimeDown)))
+
+			tickCount++
+			if tickCount%15 == 0 {
+				persistCurrentState()
+			}
 		} else {
 			initialized = true
 		}
@@ -368,4 +411,6 @@ func formatBytes(b uint64) string {
 	}
 }
 
-func onExit() {}
+func onExit() {
+	persistCurrentState()
+}

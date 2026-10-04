@@ -10,7 +10,7 @@ A lightweight macOS menu bar utility that displays real-time network upload and 
 - **Adaptive Units**: Automatically scales transfer speeds (`KB/s`, `MB/s`, `GB/s`) and cumulative data (`B`, `KB`, `MB`, `GB`, `TB`).
 - **Rich Menu Bar Dropdown**: Click the menu bar item to view:
   - Live upload and download speeds with dynamic in-menu sparkline graphs (`[ ▂▃▅█]`)
-  - Session data totals (cumulative uploaded and downloaded bytes)
+  - **Session Data Totals** and **Lifetime All-Time Totals**
   - One-click session stats reset
   - **Network Interface Selector** (All Physical Interfaces, Wi-Fi, Ethernet, VPN)
   - **Display Options**: Toggle speed units (Bytes/s vs. Bits/s) and layout styles (Standard vs. Compact notch-friendly)
@@ -18,6 +18,7 @@ A lightweight macOS menu bar utility that displays real-time network upload and 
   - One-click toggle for the floating **Traffic Graph** window
   - **Launch at Login** toggle to start automatically on macOS boot
   - Native **About** dialog with copyright details and link to the GitHub repository
+- **Persistent State**: Stats and preferences (interface selection, units, layout, and data cap limits) are automatically saved to `~/Library/Application Support/` and restored on launch.
 - **Floating HUD Traffic Graph Window**: A sleek, translucent native macOS HUD window displaying:
   - Real-time 60-second dual-line bandwidth history with smooth curves and gradient area fills (Amber/Orange for Upload, Cyan/Blue for Download)
   - Live current and peak upload & download speed badges with one-click **Reset Peaks**
