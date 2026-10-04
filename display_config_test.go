@@ -40,3 +40,22 @@ func TestDisplayConfig(t *testing.T) {
 	setUnitMode(UnitBytes)
 	setStyleMode(StyleStandard)
 }
+
+func TestMenuBarIconMode(t *testing.T) {
+	setMenuBarIconMode(MenuBarTextOnly)
+	if getMenuBarIconMode() != MenuBarTextOnly {
+		t.Errorf("expected MenuBarTextOnly")
+	}
+
+	setMenuBarIconMode(MenuBarGraphAndText)
+	if getMenuBarIconMode() != MenuBarGraphAndText {
+		t.Errorf("expected MenuBarGraphAndText")
+	}
+
+	setMenuBarIconMode(MenuBarGraphOnly)
+	if getMenuBarIconMode() != MenuBarGraphOnly {
+		t.Errorf("expected MenuBarGraphOnly")
+	}
+
+	setMenuBarIconMode(MenuBarTextOnly)
+}

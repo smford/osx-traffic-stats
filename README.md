@@ -14,7 +14,7 @@ A lightweight macOS menu bar utility that displays real-time network upload and 
   - One-click session stats reset
   - **Network Interface Selector** (All Physical Interfaces, Wi-Fi, Ethernet, VPN)
   - **Top Active Apps**: Submenu displaying real-time bandwidth consumption for the top network processes (via macOS `nettop`)
-  - **Display Options**: Toggle speed units (Bytes/s vs. Bits/s) and layout styles (Standard vs. Compact notch-friendly)
+  - **Display Options**: Toggle speed units (Bytes/s vs. Bits/s), layout styles (Standard vs. Compact), and menu bar icon mode (Text Only, Dynamic Dual-Sparkline Graph + Text, or Graph Only)
   - **Data Cap Alert**: Configurable session bandwidth warnings (1 GB, 2 GB, 5 GB, 10 GB, 20 GB) with native macOS system notifications
   - One-click toggle for the floating **Traffic Graph** window
   - **Launch at Login** toggle to start automatically on macOS boot

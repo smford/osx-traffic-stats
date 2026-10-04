@@ -65,6 +65,7 @@ func onReady() {
 		}
 		setUnitMode(savedState.UnitMode)
 		setStyleMode(savedState.StyleMode)
+		setMenuBarIconMode(savedState.MenuBarIconMode)
 		setDataCap(savedState.DataCapBytes)
 	}
 
@@ -116,6 +117,10 @@ func onReady() {
 
 	mStyleStandard := mDisplayMenu.AddSubMenuItemCheckbox("Style: Standard", "Full bandwidth labels", getStyleMode() == StyleStandard)
 	mStyleCompact := mDisplayMenu.AddSubMenuItemCheckbox("Style: Compact (Notch-Friendly)", "Compact bandwidth labels", getStyleMode() == StyleCompact)
+
+	mBarIconNone := mDisplayMenu.AddSubMenuItemCheckbox("Icon: Text Only", "Show bandwidth text only", getMenuBarIconMode() == MenuBarTextOnly)
+	mBarIconBoth := mDisplayMenu.AddSubMenuItemCheckbox("Icon: Graph + Text", "Show real-time sparkline icon and text", getMenuBarIconMode() == MenuBarGraphAndText)
+	mBarIconOnly := mDisplayMenu.AddSubMenuItemCheckbox("Icon: Graph Only", "Show real-time sparkline icon without text", getMenuBarIconMode() == MenuBarGraphOnly)
 
 	systray.AddSeparator()
 
@@ -298,6 +303,38 @@ func onReady() {
 	}()
 
 	go func() {
+		for range mBarIconNone.ClickedCh {
+			setMenuBarIconMode(MenuBarTextOnly)
+			mBarIconNone.Check()
+			mBarIconBoth.Uncheck()
+			mBarIconOnly.Uncheck()
+			updateMenuBarGraph(0, 0, MenuBarTextOnly)
+			persistCurrentState()
+		}
+	}()
+
+	go func() {
+		for range mBarIconBoth.ClickedCh {
+			setMenuBarIconMode(MenuBarGraphAndText)
+			mBarIconNone.Uncheck()
+			mBarIconBoth.Check()
+			mBarIconOnly.Uncheck()
+			persistCurrentState()
+		}
+	}()
+
+	go func() {
+		for range mBarIconOnly.ClickedCh {
+			setMenuBarIconMode(MenuBarGraphOnly)
+			mBarIconNone.Uncheck()
+			mBarIconBoth.Uncheck()
+			mBarIconOnly.Check()
+			systray.SetTitle("")
+			persistCurrentState()
+		}
+	}()
+
+	go func() {
 		for range mAbout.ClickedCh {
 			showAboutBox()
 		}
@@ -367,9 +404,14 @@ func monitorTraffic() {
 			downSpark := renderSparkline(downHistory, sparklineWidth)
 
 			updateGraph(upBytes, downBytes)
+			updateMenuBarGraph(upBytes, downBytes, getMenuBarIconMode())
 
 			// Updates the text right next to the macOS clock with fixed-width layout
-			systray.SetTitle(fmt.Sprintf("↑ %s  ↓ %s", upSpeedFixed, downSpeedFixed))
+			if getMenuBarIconMode() == MenuBarGraphOnly {
+				systray.SetTitle("")
+			} else {
+				systray.SetTitle(fmt.Sprintf("↑ %s  ↓ %s", upSpeedFixed, downSpeedFixed))
+			}
 			systray.SetTooltip(fmt.Sprintf("Bandwidth Monitor\n↑ %s [%s] (Session: %s, Total: %s)\n↓ %s [%s] (Session: %s, Total: %s)", upSpeed, upSpark, formatBytes(totalUp), formatBytes(allTimeUp), downSpeed, downSpark, formatBytes(totalDown), formatBytes(allTimeDown)))
 
 			mUploadRate.SetTitle(fmt.Sprintf("Upload:   ↑ %-8s  [%s]", upSpeed, upSpark))

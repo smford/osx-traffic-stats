@@ -19,9 +19,18 @@ const (
 	StyleCompact                  // Compact mode for notches
 )
 
+type MenuBarIconMode int
+
+const (
+	MenuBarTextOnly     MenuBarIconMode = iota // Standard text only
+	MenuBarGraphAndText                        // Real-time sparkline icon + text
+	MenuBarGraphOnly                           // Real-time sparkline icon only
+)
+
 var (
-	currentUnitMode  atomic.Int32
-	currentStyleMode atomic.Int32
+	currentUnitMode        atomic.Int32
+	currentStyleMode       atomic.Int32
+	currentMenuBarIconMode atomic.Int32
 )
 
 func getUnitMode() UnitMode {
@@ -38,6 +47,14 @@ func getStyleMode() StyleMode {
 
 func setStyleMode(s StyleMode) {
 	currentStyleMode.Store(int32(s))
+}
+
+func getMenuBarIconMode() MenuBarIconMode {
+	return MenuBarIconMode(currentMenuBarIconMode.Load())
+}
+
+func setMenuBarIconMode(m MenuBarIconMode) {
+	currentMenuBarIconMode.Store(int32(m))
 }
 
 // formatSpeedDynamic formats bandwidth based on selected unit and style

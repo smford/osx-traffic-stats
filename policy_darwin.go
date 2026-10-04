@@ -41,6 +41,97 @@ void configureFixedStatusItem(void) {
 	});
 }
 
+#define MINI_SAMPLES 16
+static uint64_t miniUpHistory[MINI_SAMPLES] = {0};
+static uint64_t miniDownHistory[MINI_SAMPLES] = {0};
+static int miniHistoryIndex = 0;
+
+void updateMenuBarGraph(uint64_t upSpeed, uint64_t downSpeed, int iconMode) {
+	dispatch_async(dispatch_get_main_queue(), ^{
+		id delegate = [NSApp delegate];
+		if (!delegate) return;
+		Ivar ivar = class_getInstanceVariable([delegate class], "statusItem");
+		if (!ivar) return;
+		NSStatusItem *statusItem = object_getIvar(delegate, ivar);
+		if (!statusItem || !statusItem.button) return;
+
+		if (iconMode == 0) {
+			if (statusItem.button.image != nil) {
+				[statusItem.button setImage:nil];
+				[statusItem.button setImagePosition:NSNoImage];
+				[statusItem setLength:172.0];
+			}
+			return;
+		}
+
+		miniUpHistory[miniHistoryIndex] = upSpeed;
+		miniDownHistory[miniHistoryIndex] = downSpeed;
+		miniHistoryIndex = (miniHistoryIndex + 1) % MINI_SAMPLES;
+
+		uint64_t maxSpeed = 10 * 1024;
+		for (int i = 0; i < MINI_SAMPLES; i++) {
+			if (miniUpHistory[i] > maxSpeed) maxSpeed = miniUpHistory[i];
+			if (miniDownHistory[i] > maxSpeed) maxSpeed = miniDownHistory[i];
+		}
+
+		CGFloat width = 28.0;
+		CGFloat height = 18.0;
+
+		NSImage *img = [NSImage imageWithSize:NSMakeSize(width, height) flipped:NO drawingHandler:^BOOL(NSRect dstRect) {
+			NSBezierPath *bg = [NSBezierPath bezierPathWithRoundedRect:dstRect xRadius:2.0 yRadius:2.0];
+			[[NSColor colorWithCalibratedWhite:0.2 alpha:0.35] setFill];
+			[bg fill];
+
+			CGFloat halfH = (height - 3.0) / 2.0;
+			CGFloat step = (width - 2.0) / (CGFloat)(MINI_SAMPLES - 1);
+
+			// Upload path (Amber/Orange)
+			NSBezierPath *upPath = [NSBezierPath bezierPath];
+			[[NSColor colorWithCalibratedRed:1.0 green:0.65 blue:0.1 alpha:0.95] setStroke];
+			[upPath setLineWidth:1.2];
+
+			for (int i = 0; i < MINI_SAMPLES; i++) {
+				int idx = (miniHistoryIndex + i) % MINI_SAMPLES;
+				CGFloat x = 1.0 + i * step;
+				CGFloat ratio = (CGFloat)miniUpHistory[idx] / (CGFloat)maxSpeed;
+				if (ratio > 1.0) ratio = 1.0;
+				CGFloat y = (height / 2.0) + (ratio * halfH);
+				if (i == 0) [upPath moveToPoint:NSMakePoint(x, y)];
+				else [upPath lineToPoint:NSMakePoint(x, y)];
+			}
+			[upPath stroke];
+
+			// Download path (Cyan/Blue)
+			NSBezierPath *downPath = [NSBezierPath bezierPath];
+			[[NSColor colorWithCalibratedRed:0.2 green:0.8 blue:1.0 alpha:0.95] setStroke];
+			[downPath setLineWidth:1.2];
+
+			for (int i = 0; i < MINI_SAMPLES; i++) {
+				int idx = (miniHistoryIndex + i) % MINI_SAMPLES;
+				CGFloat x = 1.0 + i * step;
+				CGFloat ratio = (CGFloat)miniDownHistory[idx] / (CGFloat)maxSpeed;
+				if (ratio > 1.0) ratio = 1.0;
+				CGFloat y = (height / 2.0) - (ratio * halfH);
+				if (i == 0) [downPath moveToPoint:NSMakePoint(x, y)];
+				else [downPath lineToPoint:NSMakePoint(x, y)];
+			}
+			[downPath stroke];
+
+			return YES;
+		}];
+		[img setTemplate:NO];
+
+		[statusItem.button setImage:img];
+		if (iconMode == 2) {
+			[statusItem.button setImagePosition:NSImageOnly];
+			[statusItem setLength:34.0];
+		} else {
+			[statusItem.button setImagePosition:NSImageLeading];
+			[statusItem setLength:206.0];
+		}
+	});
+}
+
 static BOOL aboutBoxOpen = NO;
 
 void showAboutBox(const char *title, const char *message, const char *url) {
@@ -96,4 +187,8 @@ func showAboutBox() {
 	defer C.free(unsafe.Pointer(cURL))
 
 	C.showAboutBox(cTitle, cMessage, cURL)
+}
+
+func updateMenuBarGraph(upSpeed, downSpeed uint64, mode MenuBarIconMode) {
+	C.updateMenuBarGraph(C.uint64_t(upSpeed), C.uint64_t(downSpeed), C.int(mode))
 }

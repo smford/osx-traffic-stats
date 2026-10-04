@@ -8,14 +8,15 @@ import (
 )
 
 type AppState struct {
-	SessionSent       uint64    `json:"session_sent"`
-	SessionRecv       uint64    `json:"session_recv"`
-	TotalSent         uint64    `json:"total_sent"`
-	TotalRecv         uint64    `json:"total_recv"`
-	SelectedInterface string    `json:"selected_interface"`
-	UnitMode          UnitMode  `json:"unit_mode"`
-	StyleMode         StyleMode `json:"style_mode"`
-	DataCapBytes      uint64    `json:"data_cap_bytes"`
+	SessionSent       uint64          `json:"session_sent"`
+	SessionRecv       uint64          `json:"session_recv"`
+	TotalSent         uint64          `json:"total_sent"`
+	TotalRecv         uint64          `json:"total_recv"`
+	SelectedInterface string          `json:"selected_interface"`
+	UnitMode          UnitMode        `json:"unit_mode"`
+	StyleMode         StyleMode       `json:"style_mode"`
+	MenuBarIconMode   MenuBarIconMode `json:"menubar_icon_mode,omitempty"`
+	DataCapBytes      uint64          `json:"data_cap_bytes"`
 }
 
 var stateMu sync.Mutex
@@ -72,6 +73,7 @@ func persistCurrentState() {
 		SelectedInterface: getSelectedInterface(),
 		UnitMode:          getUnitMode(),
 		StyleMode:         getStyleMode(),
+		MenuBarIconMode:   getMenuBarIconMode(),
 		DataCapBytes:      getDataCap(),
 	}
 	_ = saveAppState(state)
