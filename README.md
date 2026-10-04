@@ -13,6 +13,7 @@ A lightweight macOS menu bar utility that displays real-time network upload and 
   - Session data totals (cumulative uploaded and downloaded bytes)
   - One-click session stats reset
   - **Network Interface Selector** (All Physical Interfaces, Wi-Fi, Ethernet, VPN)
+  - **Display Options**: Toggle speed units (Bytes/s vs. Bits/s) and layout styles (Standard vs. Compact notch-friendly)
   - One-click toggle for the floating **Traffic Graph** window
   - **Launch at Login** toggle to start automatically on macOS boot
   - Native **About** dialog with copyright details and link to the GitHub repository

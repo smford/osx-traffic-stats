@@ -75,6 +75,15 @@ func onReady() {
 
 	systray.AddSeparator()
 
+	mDisplayMenu := systray.AddMenuItem("Display Options", "Configure speed units and layout style")
+	mUnitBytes := mDisplayMenu.AddSubMenuItemCheckbox("Units: Bytes (KB/s, MB/s)", "Display speed in bytes per second", true)
+	mUnitBits := mDisplayMenu.AddSubMenuItemCheckbox("Units: Bits (Kbps, Mbps)", "Display speed in bits per second", false)
+
+	mStyleStandard := mDisplayMenu.AddSubMenuItemCheckbox("Style: Standard", "Full bandwidth labels", true)
+	mStyleCompact := mDisplayMenu.AddSubMenuItemCheckbox("Style: Compact (Notch-Friendly)", "Compact bandwidth labels", false)
+
+	systray.AddSeparator()
+
 	mToggleGraph = systray.AddMenuItem("Show Traffic Graph", "Open a real-time bandwidth graph window")
 
 	systray.AddSeparator()
@@ -145,6 +154,38 @@ func onReady() {
 	}()
 
 	go func() {
+		for range mUnitBytes.ClickedCh {
+			setUnitMode(UnitBytes)
+			mUnitBytes.Check()
+			mUnitBits.Uncheck()
+		}
+	}()
+
+	go func() {
+		for range mUnitBits.ClickedCh {
+			setUnitMode(UnitBits)
+			mUnitBits.Check()
+			mUnitBytes.Uncheck()
+		}
+	}()
+
+	go func() {
+		for range mStyleStandard.ClickedCh {
+			setStyleMode(StyleStandard)
+			mStyleStandard.Check()
+			mStyleCompact.Uncheck()
+		}
+	}()
+
+	go func() {
+		for range mStyleCompact.ClickedCh {
+			setStyleMode(StyleCompact)
+			mStyleCompact.Check()
+			mStyleStandard.Uncheck()
+		}
+	}()
+
+	go func() {
 		for range mAbout.ClickedCh {
 			showAboutBox()
 		}
@@ -192,8 +233,10 @@ func monitorTraffic() {
 			totalUp := sessionSent.Add(upBytes)
 			totalDown := sessionRecv.Add(downBytes)
 
-			upSpeed := formatSpeed(upBytes)
-			downSpeed := formatSpeed(downBytes)
+			upSpeed := formatSpeedDynamic(upBytes, false)
+			downSpeed := formatSpeedDynamic(downBytes, false)
+			upSpeedFixed := formatSpeedDynamic(upBytes, true)
+			downSpeedFixed := formatSpeedDynamic(downBytes, true)
 
 			upHistory = append(upHistory, upBytes)
 			if len(upHistory) > sparklineWidth {
@@ -210,7 +253,7 @@ func monitorTraffic() {
 			updateGraph(upBytes, downBytes)
 
 			// Updates the text right next to the macOS clock with fixed-width layout
-			systray.SetTitle(fmt.Sprintf("↑ %s  ↓ %s", formatSpeedFixed(upBytes), formatSpeedFixed(downBytes)))
+			systray.SetTitle(fmt.Sprintf("↑ %s  ↓ %s", upSpeedFixed, downSpeedFixed))
 			systray.SetTooltip(fmt.Sprintf("Bandwidth Monitor\n↑ %s [%s] (Total: %s)\n↓ %s [%s] (Total: %s)", upSpeed, upSpark, formatBytes(totalUp), downSpeed, downSpark, formatBytes(totalDown)))
 
 			mUploadRate.SetTitle(fmt.Sprintf("Upload:   ↑ %-8s  [%s]", upSpeed, upSpark))
