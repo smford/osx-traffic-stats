@@ -43,3 +43,7 @@ func updateGraph(upSpeed, downSpeed uint64) {
 func isTrafficGraphVisible() bool {
 	return C.isTrafficGraphVisible() != 0
 }
+
+func resetPeaks() {
+	C.resetTrafficGraphPeaks()
+}

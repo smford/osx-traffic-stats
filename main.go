@@ -55,6 +55,7 @@ func onReady() {
 	mSessionDown.Disable()
 
 	mReset := systray.AddMenuItem("Reset Session Stats", "Reset session upload and download counters")
+	mResetPeaks := systray.AddMenuItem("Reset Peak Speeds", "Reset peak upload and download speed records")
 
 	systray.AddSeparator()
 
@@ -104,6 +105,12 @@ func onReady() {
 			sessionRecv.Store(0)
 			mSessionUp.SetTitle("Session Upload: 0 B")
 			mSessionDown.SetTitle("Session Download: 0 B")
+		}
+	}()
+
+	go func() {
+		for range mResetPeaks.ClickedCh {
+			resetPeaks()
 		}
 	}()
 

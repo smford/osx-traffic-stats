@@ -19,7 +19,8 @@ A lightweight macOS menu bar utility that displays real-time network upload and 
   - Native **About** dialog with copyright details and link to the GitHub repository
 - **Floating HUD Traffic Graph Window**: A sleek, translucent native macOS HUD window displaying:
   - Real-time 60-second dual-line bandwidth history with smooth curves and gradient area fills (Amber/Orange for Upload, Cyan/Blue for Download)
-  - Live current and peak upload & download speed badges
+  - Live current and peak upload & download speed badges with one-click **Reset Peaks**
+  - **Timeframe Selector**: Toggle between **1m**, **5m**, and **15m** history windows directly in the graph controls
   - Auto-scaling dynamic Y-axis with dotted grid lines and time markers (`-60s`, `-30s`, `Now`)
   - Stays floating above windows for easy monitoring while working, draggable, resizable, and toggled from the menu bar
 - **Hover Tooltip**: Detailed summary with live sparklines available on mouse hover.

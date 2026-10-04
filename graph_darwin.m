@@ -5,14 +5,19 @@
 
 extern void onTrafficGraphClosed(void);
 
-#define HISTORY_CAPACITY 60
+#define HISTORY_CAPACITY 900
+#define DISPLAY_POINTS 60
 
 @interface TrafficGraphView : NSView
 @property (nonatomic, assign) uint64_t currentUpload;
 @property (nonatomic, assign) uint64_t currentDownload;
 @property (nonatomic, assign) uint64_t peakUpload;
 @property (nonatomic, assign) uint64_t peakDownload;
+@property (nonatomic, assign) int timeframeSeconds;
+
 - (void)addTrafficDataWithUpload:(uint64_t)up download:(uint64_t)down;
+- (void)resetPeaks;
+- (void)setTimeframe:(int)seconds;
 @end
 
 @implementation TrafficGraphView {
@@ -27,12 +32,27 @@ extern void onTrafficGraphClosed(void);
         memset(_uploadHistory, 0, sizeof(_uploadHistory));
         memset(_downloadHistory, 0, sizeof(_downloadHistory));
         _count = 0;
+        _timeframeSeconds = 60;
     }
     return self;
 }
 
 - (BOOL)isFlipped {
     return YES;
+}
+
+- (void)resetPeaks {
+    self.peakUpload = self.currentUpload;
+    self.peakDownload = self.currentDownload;
+    [self setNeedsDisplay:YES];
+}
+
+- (void)setTimeframe:(int)seconds {
+    if (seconds != 60 && seconds != 300 && seconds != 900) {
+        seconds = 60;
+    }
+    _timeframeSeconds = seconds;
+    [self setNeedsDisplay:YES];
 }
 
 - (void)addTrafficDataWithUpload:(uint64_t)up download:(uint64_t)down {
@@ -112,7 +132,7 @@ static NSString* formatSpeedObjC(uint64_t bytesPerSec) {
     // Plot Dimensions
     CGFloat leftMargin = 58;
     CGFloat rightMargin = 16;
-    CGFloat topMargin = 54;
+    CGFloat topMargin = 56;
     CGFloat bottomMargin = 26;
 
     NSRect plotRect = NSMakeRect(leftMargin, topMargin,
@@ -131,12 +151,37 @@ static NSString* formatSpeedObjC(uint64_t bytesPerSec) {
     [plotBg setLineWidth:1.0];
     [plotBg stroke];
 
-    // Determine scale
+    int windowSec = self.timeframeSeconds;
+    if (windowSec <= 0) windowSec = 60;
+    int startIndex = HISTORY_CAPACITY - windowSec;
+    if (startIndex < 0) startIndex = 0;
+
+    // Resample into 60 display points
+    uint64_t downSampled[DISPLAY_POINTS];
+    uint64_t upSampled[DISPLAY_POINTS];
+    memset(downSampled, 0, sizeof(downSampled));
+    memset(upSampled, 0, sizeof(upSampled));
+
+    int bucketSize = windowSec / DISPLAY_POINTS;
+    if (bucketSize < 1) bucketSize = 1;
+
     uint64_t maxVal = 0;
-    for (int i = 0; i < HISTORY_CAPACITY; i++) {
-        if (_uploadHistory[i] > maxVal) maxVal = _uploadHistory[i];
-        if (_downloadHistory[i] > maxVal) maxVal = _downloadHistory[i];
+    for (int p = 0; p < DISPLAY_POINTS; p++) {
+        uint64_t maxDownInBucket = 0;
+        uint64_t maxUpInBucket = 0;
+        int bStart = startIndex + p * bucketSize;
+        for (int b = 0; b < bucketSize && (bStart + b) < HISTORY_CAPACITY; b++) {
+            uint64_t d = _downloadHistory[bStart + b];
+            uint64_t u = _uploadHistory[bStart + b];
+            if (d > maxDownInBucket) maxDownInBucket = d;
+            if (u > maxUpInBucket) maxUpInBucket = u;
+        }
+        downSampled[p] = maxDownInBucket;
+        upSampled[p] = maxUpInBucket;
+        if (maxDownInBucket > maxVal) maxVal = maxDownInBucket;
+        if (maxUpInBucket > maxVal) maxVal = maxUpInBucket;
     }
+
     const uint64_t minScale = 100 * 1024; // 100 KB/s floor
     if (maxVal < minScale) {
         maxVal = minScale;
@@ -181,23 +226,26 @@ static NSString* formatSpeedObjC(uint64_t bytesPerSec) {
         NSFontAttributeName: [NSFont systemFontOfSize:9 weight:NSFontWeightRegular],
         NSForegroundColorAttributeName: [NSColor colorWithCalibratedWhite:0.45 alpha:1.0]
     };
-    [@"-60s" drawAtPoint:NSMakePoint(plotRect.origin.x, plotBottom + 5) withAttributes:timeAttrs];
-    [@"-30s" drawAtPoint:NSMakePoint(plotRect.origin.x + plotRect.size.width * 0.5 - 10, plotBottom + 5) withAttributes:timeAttrs];
-    [@"Now" drawAtPoint:NSMakePoint(plotRect.origin.x + plotRect.size.width - 22, plotBottom + 5) withAttributes:timeAttrs];
+    NSString *tLeft = (windowSec == 900) ? @"-15m" : (windowSec == 300 ? @"-5m" : @"-60s");
+    NSString *tMid = (windowSec == 900) ? @"-7.5m" : (windowSec == 300 ? @"-2.5m" : @"-30s");
+
+    [tLeft drawAtPoint:NSMakePoint(plotRect.origin.x, plotBottom + 5) withAttributes:timeAttrs];
+    [tMid drawAtPoint:NSMakePoint(plotRect.origin.x + plotRect.size.width * 0.5 - 12, plotBottom + 5) withAttributes:timeAttrs];
+    [@"Now" drawAtPoint:NSMakePoint(plotRect.origin.x + plotRect.size.width - 24, plotBottom + 5) withAttributes:timeAttrs];
 
     // Compute curve points
-    NSPoint downPoints[HISTORY_CAPACITY];
-    NSPoint upPoints[HISTORY_CAPACITY];
+    NSPoint downPoints[DISPLAY_POINTS];
+    NSPoint upPoints[DISPLAY_POINTS];
 
-    for (int i = 0; i < HISTORY_CAPACITY; i++) {
-        CGFloat x = plotRect.origin.x + ((CGFloat)i / (CGFloat)(HISTORY_CAPACITY - 1)) * plotRect.size.width;
+    for (int i = 0; i < DISPLAY_POINTS; i++) {
+        CGFloat x = plotRect.origin.x + ((CGFloat)i / (CGFloat)(DISPLAY_POINTS - 1)) * plotRect.size.width;
 
-        double downRatio = (double)_downloadHistory[i] / scaleMax;
+        double downRatio = (double)downSampled[i] / scaleMax;
         if (downRatio > 1.0) downRatio = 1.0;
         CGFloat yDown = plotBottom - downRatio * plotRect.size.height;
         downPoints[i] = NSMakePoint(x, yDown);
 
-        double upRatio = (double)_uploadHistory[i] / scaleMax;
+        double upRatio = (double)upSampled[i] / scaleMax;
         if (upRatio > 1.0) upRatio = 1.0;
         CGFloat yUp = plotBottom - upRatio * plotRect.size.height;
         upPoints[i] = NSMakePoint(x, yUp);
@@ -206,10 +254,10 @@ static NSString* formatSpeedObjC(uint64_t bytesPerSec) {
     // 1. Draw Download Series (Area + Line)
     NSBezierPath *downArea = [NSBezierPath bezierPath];
     [downArea moveToPoint:NSMakePoint(downPoints[0].x, plotBottom)];
-    for (int i = 0; i < HISTORY_CAPACITY; i++) {
+    for (int i = 0; i < DISPLAY_POINTS; i++) {
         [downArea lineToPoint:downPoints[i]];
     }
-    [downArea lineToPoint:NSMakePoint(downPoints[HISTORY_CAPACITY - 1].x, plotBottom)];
+    [downArea lineToPoint:NSMakePoint(downPoints[DISPLAY_POINTS - 1].x, plotBottom)];
     [downArea closePath];
 
     [NSGraphicsContext saveGraphicsState];
@@ -226,7 +274,7 @@ static NSString* formatSpeedObjC(uint64_t bytesPerSec) {
     [downLine setLineJoinStyle:NSLineJoinStyleRound];
     [downLine setLineCapStyle:NSLineCapStyleRound];
     [downLine moveToPoint:downPoints[0]];
-    for (int i = 1; i < HISTORY_CAPACITY; i++) {
+    for (int i = 1; i < DISPLAY_POINTS; i++) {
         [downLine lineToPoint:downPoints[i]];
     }
     [NSGraphicsContext saveGraphicsState];
@@ -235,7 +283,7 @@ static NSString* formatSpeedObjC(uint64_t bytesPerSec) {
     [downLine stroke];
 
     // Download pulse dot
-    NSPoint lastDown = downPoints[HISTORY_CAPACITY - 1];
+    NSPoint lastDown = downPoints[DISPLAY_POINTS - 1];
     NSBezierPath *dDot = [NSBezierPath bezierPathWithOvalInRect:NSMakeRect(lastDown.x - 2.5, lastDown.y - 2.5, 5.0, 5.0)];
     [downColor setFill];
     [dDot fill];
@@ -244,10 +292,10 @@ static NSString* formatSpeedObjC(uint64_t bytesPerSec) {
     // 2. Draw Upload Series (Area + Line)
     NSBezierPath *upArea = [NSBezierPath bezierPath];
     [upArea moveToPoint:NSMakePoint(upPoints[0].x, plotBottom)];
-    for (int i = 0; i < HISTORY_CAPACITY; i++) {
+    for (int i = 0; i < DISPLAY_POINTS; i++) {
         [upArea lineToPoint:upPoints[i]];
     }
-    [upArea lineToPoint:NSMakePoint(upPoints[HISTORY_CAPACITY - 1].x, plotBottom)];
+    [upArea lineToPoint:NSMakePoint(upPoints[DISPLAY_POINTS - 1].x, plotBottom)];
     [upArea closePath];
 
     [NSGraphicsContext saveGraphicsState];
@@ -264,7 +312,7 @@ static NSString* formatSpeedObjC(uint64_t bytesPerSec) {
     [upLine setLineJoinStyle:NSLineJoinStyleRound];
     [upLine setLineCapStyle:NSLineCapStyleRound];
     [upLine moveToPoint:upPoints[0]];
-    for (int i = 1; i < HISTORY_CAPACITY; i++) {
+    for (int i = 1; i < DISPLAY_POINTS; i++) {
         [upLine lineToPoint:upPoints[i]];
     }
     [NSGraphicsContext saveGraphicsState];
@@ -273,7 +321,7 @@ static NSString* formatSpeedObjC(uint64_t bytesPerSec) {
     [upLine stroke];
 
     // Upload pulse dot
-    NSPoint lastUp = upPoints[HISTORY_CAPACITY - 1];
+    NSPoint lastUp = upPoints[DISPLAY_POINTS - 1];
     NSBezierPath *uDot = [NSBezierPath bezierPathWithOvalInRect:NSMakeRect(lastUp.x - 2.5, lastUp.y - 2.5, 5.0, 5.0)];
     [upColor setFill];
     [uDot fill];
@@ -294,11 +342,37 @@ static NSString* formatSpeedObjC(uint64_t bytesPerSec) {
 static NSPanel *sharedGraphPanel = nil;
 static TrafficGraphView *sharedGraphView = nil;
 static TrafficGraphWindowDelegate *sharedGraphDelegate = nil;
+static NSSegmentedControl *sharedTimeSegment = nil;
+
+@interface GraphControlsTarget : NSObject
+- (void)timeframeSelected:(id)sender;
+- (void)resetPeaksClicked:(id)sender;
+@end
+
+@implementation GraphControlsTarget
+- (void)timeframeSelected:(id)sender {
+    NSSegmentedControl *seg = (NSSegmentedControl *)sender;
+    int secs = 60;
+    if (seg.selectedSegment == 1) secs = 300;
+    else if (seg.selectedSegment == 2) secs = 900;
+    if (sharedGraphView) {
+        [sharedGraphView setTimeframe:secs];
+    }
+}
+
+- (void)resetPeaksClicked:(id)sender {
+    if (sharedGraphView) {
+        [sharedGraphView resetPeaks];
+    }
+}
+@end
+
+static GraphControlsTarget *sharedControlsTarget = nil;
 
 static void createTrafficGraphPanel(void) {
     if (sharedGraphPanel) return;
 
-    NSRect frame = NSMakeRect(200, 200, 440, 260);
+    NSRect frame = NSMakeRect(200, 200, 480, 270);
     sharedGraphPanel = [[NSPanel alloc] initWithContentRect:frame
                                                   styleMask:NSWindowStyleMaskTitled |
                                                             NSWindowStyleMaskClosable |
@@ -309,7 +383,7 @@ static void createTrafficGraphPanel(void) {
     [sharedGraphPanel setTitle:@"Network Traffic Graph"];
     [sharedGraphPanel setLevel:NSFloatingWindowLevel];
     [sharedGraphPanel setReleasedWhenClosed:NO];
-    [sharedGraphPanel setMinSize:NSMakeSize(340, 200)];
+    [sharedGraphPanel setMinSize:NSMakeSize(380, 220)];
     [sharedGraphPanel setMovableByWindowBackground:YES];
 
     sharedGraphDelegate = [[TrafficGraphWindowDelegate alloc] init];
@@ -325,6 +399,27 @@ static void createTrafficGraphPanel(void) {
     sharedGraphView = [[TrafficGraphView alloc] initWithFrame:vibrantView.bounds];
     sharedGraphView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
     [vibrantView addSubview:sharedGraphView];
+
+    sharedControlsTarget = [[GraphControlsTarget alloc] init];
+
+    // Segmented timeframe control in top right
+    sharedTimeSegment = [NSSegmentedControl segmentedControlWithLabels:@[@"1m", @"5m", @"15m"]
+                                                          trackingMode:NSSegmentSwitchTrackingSelectOne
+                                                                target:sharedControlsTarget
+                                                                action:@selector(timeframeSelected:)];
+    sharedTimeSegment.selectedSegment = 0;
+    sharedTimeSegment.frame = NSMakeRect(frame.size.width - 150, 14, 134, 22);
+    sharedTimeSegment.autoresizingMask = NSViewMinXMargin | NSViewMaxYMargin;
+    [vibrantView addSubview:sharedTimeSegment];
+
+    // Reset Peaks button
+    NSButton *resetBtn = [NSButton buttonWithTitle:@"Reset Peaks"
+                                            target:sharedControlsTarget
+                                            action:@selector(resetPeaksClicked:)];
+    [resetBtn setBezelStyle:NSBezelStyleInline];
+    resetBtn.frame = NSMakeRect(frame.size.width - 240, 14, 84, 22);
+    resetBtn.autoresizingMask = NSViewMinXMargin | NSViewMaxYMargin;
+    [vibrantView addSubview:resetBtn];
 }
 
 void toggleTrafficGraphWindow(void) {
@@ -344,6 +439,14 @@ void updateTrafficGraph(uint64_t upSpeed, uint64_t downSpeed) {
     dispatch_async(dispatch_get_main_queue(), ^{
         createTrafficGraphPanel();
         [sharedGraphView addTrafficDataWithUpload:upSpeed download:downSpeed];
+    });
+}
+
+void resetTrafficGraphPeaks(void) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (sharedGraphView) {
+            [sharedGraphView resetPeaks];
+        }
     });
 }
 

@@ -9,3 +9,6 @@ func updateGraph(upSpeed, downSpeed uint64) {}
 func isTrafficGraphVisible() bool {
 	return false
 }
+
+func resetPeaks() {}
+

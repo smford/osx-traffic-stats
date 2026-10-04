@@ -8,5 +8,6 @@
 void toggleTrafficGraphWindow(void);
 void updateTrafficGraph(uint64_t upSpeed, uint64_t downSpeed);
 int isTrafficGraphVisible(void);
+void resetTrafficGraphPeaks(void);
 
 #endif // GRAPH_DARWIN_H
