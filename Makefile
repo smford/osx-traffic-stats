@@ -10,6 +10,10 @@ VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "1.0
 CLEAN_VERSION := $(patsubst v%,%,$(VERSION))
 LDFLAGS := -X main.appVersion=$(CLEAN_VERSION)
 
+export MACOSX_DEPLOYMENT_TARGET ?= 11.0
+export CGO_CFLAGS ?= -mmacosx-version-min=$(MACOSX_DEPLOYMENT_TARGET)
+export CGO_LDFLAGS ?= -mmacosx-version-min=$(MACOSX_DEPLOYMENT_TARGET)
+
 .PHONY: all build build-universal app app-universal package run run-app install test test-coverage vet clean
 
 all: build
@@ -21,7 +25,7 @@ build:
 build-universal:
 	@mkdir -p $(BUILD_DIR)
 	CGO_ENABLED=1 GOARCH=arm64 go build -ldflags "$(LDFLAGS)" -o $(BUILD_DIR)/$(BINARY_NAME)-arm64 .
-	CGO_ENABLED=1 GOARCH=amd64 CC="clang -arch x86_64" go build -ldflags "$(LDFLAGS)" -o $(BUILD_DIR)/$(BINARY_NAME)-amd64 .
+	CGO_ENABLED=1 GOARCH=amd64 CC="clang -arch x86_64 -mmacosx-version-min=$(MACOSX_DEPLOYMENT_TARGET)" go build -ldflags "$(LDFLAGS)" -o $(BUILD_DIR)/$(BINARY_NAME)-amd64 .
 	lipo -create -output $(BUILD_DIR)/$(BINARY_NAME) $(BUILD_DIR)/$(BINARY_NAME)-arm64 $(BUILD_DIR)/$(BINARY_NAME)-amd64
 	@rm -f $(BUILD_DIR)/$(BINARY_NAME)-arm64 $(BUILD_DIR)/$(BINARY_NAME)-amd64
 
@@ -35,6 +39,9 @@ app: build
 		/usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $(CLEAN_VERSION)" $(APP_CONTENTS)/Info.plist 2>/dev/null || true; \
 		/usr/libexec/PlistBuddy -c "Set :CFBundleVersion $(CLEAN_VERSION)" $(APP_CONTENTS)/Info.plist 2>/dev/null || true; \
 	fi
+	@if command -v codesign >/dev/null 2>&1; then \
+		codesign --force --deep -s - $(APP_BUNDLE) 2>/dev/null || true; \
+	fi
 	@echo "Built $(APP_BUNDLE) (version $(CLEAN_VERSION))"
 
 app-universal: build-universal
@@ -46,6 +53,9 @@ app-universal: build-universal
 	@if [ -x /usr/libexec/PlistBuddy ]; then \
 		/usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $(CLEAN_VERSION)" $(APP_CONTENTS)/Info.plist 2>/dev/null || true; \
 		/usr/libexec/PlistBuddy -c "Set :CFBundleVersion $(CLEAN_VERSION)" $(APP_CONTENTS)/Info.plist 2>/dev/null || true; \
+	fi
+	@if command -v codesign >/dev/null 2>&1; then \
+		codesign --force --deep -s - $(APP_BUNDLE) 2>/dev/null || true; \
 	fi
 	@echo "Built universal $(APP_BUNDLE) (version $(CLEAN_VERSION))"
 
