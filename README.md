@@ -17,6 +17,83 @@
 
 ---
 
+## 📦 Installation
+
+### Method 1: Homebrew Cask (Recommended — Native macOS App)
+
+Install the native macOS `.app` bundle directly into `/Applications`:
+
+```bash
+brew install --cask smford/tap/osx-traffic-stats
+```
+
+Or add the tap first and then install:
+
+```bash
+brew tap smford/tap
+brew install --cask osx-traffic-stats
+```
+
+#### Launching the App
+- **Spotlight**: Press `Cmd + Space`, type `OSX Traffic Stats`, and press **Enter**.
+- **Launchpad / Finder**: Click **OSX Traffic Stats** in `/Applications`.
+- **Terminal**: Run `open -a OSXTrafficStats`.
+
+#### Upgrading & Uninstalling
+```bash
+# Upgrade to the latest release
+brew upgrade --cask osx-traffic-stats
+
+# Uninstall
+brew uninstall --cask osx-traffic-stats
+```
+
+---
+
+### Method 2: Homebrew Formula (Standalone CLI Binary)
+
+If you prefer only the standalone command-line binary installed to your `PATH` (`/opt/homebrew/bin`):
+
+```bash
+brew install --formula smford/tap/osx-traffic-stats
+```
+
+To run in the background from your terminal:
+```bash
+osx-traffic-stats &
+```
+
+---
+
+### Method 3: Pre-built GitHub Releases
+
+Download universal binaries (Apple Silicon & Intel) or the macOS application bundle (`OSXTrafficStats-v*.zip`) directly from [GitHub Releases](https://github.com/smford/osx-traffic-stats/releases):
+1. Download `OSXTrafficStats-v*-macOS.zip`.
+2. Extract the archive.
+3. Drag `OSXTrafficStats.app` into your **Applications** folder.
+
+---
+
+### Method 4: Building from Source
+
+**Prerequisites:** macOS (Darwin), Go 1.21+, and Xcode Command Line Tools (`xcode-select --install`).
+
+```bash
+git clone https://github.com/smford/osx-traffic-stats.git
+cd osx-traffic-stats
+
+# Build and install OSXTrafficStats.app directly to ~/Applications
+make install
+
+# Or build standalone binary in bin/osx-traffic-stats
+make build
+
+# Run directly from source
+make run
+```
+
+---
+
 ## Features
 
 - **Accessory Toolbar Behavior**: Operates seamlessly as a native macOS accessory/agent application (`NSApplicationActivationPolicyAccessory` & `LSUIElement`). It stays tucked in your menu bar with no Dock icon and no presence in the Command-Tab application switcher.
@@ -35,7 +112,7 @@
   - **Data Cap Alert**: Configurable session bandwidth warnings (1 GB, 2 GB, 5 GB, 10 GB, 20 GB) with native macOS system notifications
   - One-click toggle for the floating **Traffic Graph** window
   - **Launch at Login** toggle to start automatically on macOS boot
-  - Native **About** dialog with copyright details and link to the GitHub repository
+  - Native **About** dialog with copyright details, logo, and link to the GitHub repository
 - **Persistent State**: Stats and preferences (interface selection, units, layout, and data cap limits) are automatically saved to `~/Library/Application Support/` and restored on launch.
 - **Floating HUD Traffic Graph Window**: A sleek, translucent native macOS HUD window displaying:
   - Real-time 60-second dual-line bandwidth history with smooth curves and gradient area fills (Amber/Orange for Upload, Cyan/Blue for Download)
@@ -49,95 +126,7 @@
 - **Counter Reset Protection**: Handles network interface reconnections and counter rollovers cleanly without underflow spikes.
 - **App Bundle Support**: Easily build and install as a native macOS application bundle (`OSXTrafficStats.app`).
 
-## Installation
-
-### Via Homebrew Cask (Recommended — Native macOS App)
-
-Install the native macOS `.app` bundle directly into `/Applications`:
-
-```bash
-brew install --cask smford/tap/osx-traffic-stats
-```
-
-Or add the tap first and then install:
-
-```bash
-brew tap smford/tap
-brew install --cask osx-traffic-stats
-```
-
-Once installed:
-- Launch via **Spotlight** (`Cmd + Space` &rarr; type `OSX Traffic Stats`), **Launchpad**, or Finder &rarr; **Applications**.
-- Or from terminal: `open -a OSXTrafficStats`
-
-To upgrade:
-
-```bash
-brew upgrade --cask osx-traffic-stats
-```
-
-### Via Homebrew Formula (Standalone CLI Binary)
-
-If you prefer only the standalone command-line binary installed to your `PATH` (`/opt/homebrew/bin`):
-
-```bash
-brew install --formula smford/tap/osx-traffic-stats
-```
-
-### Pre-built Binaries & App Bundle
-
-Download pre-compiled universal binaries (Apple Silicon & Intel) or the macOS application bundle (`OSXTrafficStats-v*.zip`) directly from [GitHub Releases](https://github.com/smford/osx-traffic-stats/releases).
-
-## Prerequisites
-
-- **macOS**: Built specifically for macOS (Darwin).
-- **Go**: Version 1.21 or later.
-- **Xcode Command Line Tools**: Required for Cgo support with macOS Cocoa APIs (`xcode-select --install`).
-
-## Getting Started
-
-### Building from Source
-
-Clone the repository and build the binary or macOS `.app` bundle:
-
-```bash
-git clone https://github.com/smford/osx-traffic-stats.git
-cd osx-traffic-stats
-
-# Build standalone binary in bin/osx-traffic-stats
-make build
-
-# Or build native macOS .app bundle in bin/OSXTrafficStats.app
-make app
-```
-
-### Running
-
-To run directly from source:
-
-```bash
-make run
-```
-
-To run the standalone binary:
-
-```bash
-./bin/osx-traffic-stats
-```
-
-To launch the macOS `.app` bundle:
-
-```bash
-make run-app
-```
-
-To install the app bundle into `~/Applications`:
-
-```bash
-make install
-```
-
-To exit, click the menu bar item and select **Quit**.
+---
 
 ## Development
 
@@ -156,6 +145,8 @@ A [`Makefile`](file:///Users/asc/git/osx-traffic-stats/Makefile) is provided for
 | `make vet` | Runs `go vet` static analysis |
 | `make clean` | Removes build and coverage artifacts |
 
+---
+
 ## License
 
-MIT
+MIT License. See [LICENSE](LICENSE) for details.
