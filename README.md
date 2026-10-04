@@ -27,6 +27,7 @@ A lightweight macOS menu bar utility that displays real-time network upload and 
   - Live current and peak upload & download speed badges with one-click **Reset Peaks**
   - **Timeframe Selector**: Toggle between **1m**, **5m**, and **15m** history windows directly in the graph controls
   - Auto-scaling dynamic Y-axis with dotted grid lines and time markers (`-60s`, `-30s`, `Now`)
+  - **HUD Window Customization**: Adjust opacity presets (100% Solid, 85% Glass, 70% Subtle, 50% Translucent), toggle **Always on Top**, or snap to any screen corner (Top-Right, Bottom-Right, Top-Left, Bottom-Left)
   - Stays floating above windows for easy monitoring while working, draggable, resizable, and toggled from the menu bar
 - **Hover Tooltip**: Detailed summary with live sparklines available on mouse hover.
 - **Counter Reset Protection**: Handles network interface reconnections and counter rollovers cleanly without underflow spikes.

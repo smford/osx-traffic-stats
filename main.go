@@ -71,6 +71,10 @@ func onReady() {
 		if savedState.RefreshRate > 0 {
 			setRefreshRate(savedState.RefreshRate)
 		}
+		if savedState.GraphOpacity > 0 {
+			setGraphOpacityConfig(savedState.GraphOpacity)
+		}
+		setGraphAlwaysOnTopConfig(savedState.GraphAlwaysOnTop)
 		setDataCap(savedState.DataCapBytes)
 	}
 
@@ -188,6 +192,19 @@ func onReady() {
 	systray.AddSeparator()
 
 	mToggleGraph = systray.AddMenuItem("Show Traffic Graph", "Open a real-time bandwidth graph window")
+
+	mGraphOptions := systray.AddMenuItem("Graph Window Options", "Configure floating graph opacity, level, and position")
+	mSnapTopRight := mGraphOptions.AddSubMenuItem("Snap: Top-Right Corner", "Position graph window in top-right corner")
+	mSnapBottomRight := mGraphOptions.AddSubMenuItem("Snap: Bottom-Right Corner", "Position graph window in bottom-right corner")
+	mSnapTopLeft := mGraphOptions.AddSubMenuItem("Snap: Top-Left Corner", "Position graph window in top-left corner")
+	mSnapBottomLeft := mGraphOptions.AddSubMenuItem("Snap: Bottom-Left Corner", "Position graph window in bottom-left corner")
+
+	mAlwaysOnTop := mGraphOptions.AddSubMenuItemCheckbox("Always on Top", "Keep floating graph above other windows", getGraphAlwaysOnTop())
+
+	mOpacity100 := mGraphOptions.AddSubMenuItemCheckbox("Opacity: 100% (Solid)", "Full opacity", getGraphOpacity() >= 0.95)
+	mOpacity85 := mGraphOptions.AddSubMenuItemCheckbox("Opacity: 85% (Glass)", "85% opacity", getGraphOpacity() >= 0.80 && getGraphOpacity() < 0.95)
+	mOpacity70 := mGraphOptions.AddSubMenuItemCheckbox("Opacity: 70% (Subtle)", "70% opacity", getGraphOpacity() >= 0.60 && getGraphOpacity() < 0.80)
+	mOpacity50 := mGraphOptions.AddSubMenuItemCheckbox("Opacity: 50% (Translucent)", "50% opacity", getGraphOpacity() < 0.60)
 
 	systray.AddSeparator()
 
@@ -407,6 +424,81 @@ func onReady() {
 			case refreshRateSignal <- struct{}{}:
 			default:
 			}
+			persistCurrentState()
+		}
+	}()
+
+	go func() {
+		for range mSnapTopRight.ClickedCh {
+			snapGraphWindow(0)
+		}
+	}()
+	go func() {
+		for range mSnapBottomRight.ClickedCh {
+			snapGraphWindow(1)
+		}
+	}()
+	go func() {
+		for range mSnapTopLeft.ClickedCh {
+			snapGraphWindow(2)
+		}
+	}()
+	go func() {
+		for range mSnapBottomLeft.ClickedCh {
+			snapGraphWindow(3)
+		}
+	}()
+
+	go func() {
+		for range mAlwaysOnTop.ClickedCh {
+			newVal := !getGraphAlwaysOnTop()
+			setGraphAlwaysOnTopConfig(newVal)
+			if newVal {
+				mAlwaysOnTop.Check()
+			} else {
+				mAlwaysOnTop.Uncheck()
+			}
+			persistCurrentState()
+		}
+	}()
+
+	go func() {
+		for range mOpacity100.ClickedCh {
+			setGraphOpacityConfig(1.0)
+			mOpacity100.Check()
+			mOpacity85.Uncheck()
+			mOpacity70.Uncheck()
+			mOpacity50.Uncheck()
+			persistCurrentState()
+		}
+	}()
+	go func() {
+		for range mOpacity85.ClickedCh {
+			setGraphOpacityConfig(0.85)
+			mOpacity100.Uncheck()
+			mOpacity85.Check()
+			mOpacity70.Uncheck()
+			mOpacity50.Uncheck()
+			persistCurrentState()
+		}
+	}()
+	go func() {
+		for range mOpacity70.ClickedCh {
+			setGraphOpacityConfig(0.70)
+			mOpacity100.Uncheck()
+			mOpacity85.Uncheck()
+			mOpacity70.Check()
+			mOpacity50.Uncheck()
+			persistCurrentState()
+		}
+	}()
+	go func() {
+		for range mOpacity50.ClickedCh {
+			setGraphOpacityConfig(0.50)
+			mOpacity100.Uncheck()
+			mOpacity85.Uncheck()
+			mOpacity70.Uncheck()
+			mOpacity50.Check()
 			persistCurrentState()
 		}
 	}()

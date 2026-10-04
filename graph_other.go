@@ -12,3 +12,9 @@ func isTrafficGraphVisible() bool {
 
 func resetPeaks() {}
 
+func setGraphOpacity(opacity float64) {}
+
+func setGraphAlwaysOnTop(alwaysOnTop bool) {}
+
+func snapGraphWindow(corner int) {}
+

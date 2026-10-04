@@ -47,3 +47,19 @@ func isTrafficGraphVisible() bool {
 func resetPeaks() {
 	C.resetTrafficGraphPeaks()
 }
+
+func setGraphOpacity(opacity float64) {
+	C.setTrafficGraphOpacity(C.double(opacity))
+}
+
+func setGraphAlwaysOnTop(alwaysOnTop bool) {
+	var val C.int
+	if alwaysOnTop {
+		val = 1
+	}
+	C.setTrafficGraphAlwaysOnTop(val)
+}
+
+func snapGraphWindow(corner int) {
+	C.snapTrafficGraphWindow(C.int(corner))
+}

@@ -368,6 +368,8 @@ static NSSegmentedControl *sharedTimeSegment = nil;
 @end
 
 static GraphControlsTarget *sharedControlsTarget = nil;
+static double currentGraphOpacity = 1.0;
+static BOOL currentGraphAlwaysOnTop = YES;
 
 static void createTrafficGraphPanel(void) {
     if (sharedGraphPanel) return;
@@ -381,7 +383,8 @@ static void createTrafficGraphPanel(void) {
                                                     backing:NSBackingStoreBuffered
                                                       defer:NO];
     [sharedGraphPanel setTitle:@"Network Traffic Graph"];
-    [sharedGraphPanel setLevel:NSFloatingWindowLevel];
+    [sharedGraphPanel setLevel:(currentGraphAlwaysOnTop ? NSFloatingWindowLevel : NSNormalWindowLevel)];
+    [sharedGraphPanel setAlphaValue:currentGraphOpacity];
     [sharedGraphPanel setReleasedWhenClosed:NO];
     [sharedGraphPanel setMinSize:NSMakeSize(380, 220)];
     [sharedGraphPanel setMovableByWindowBackground:YES];
@@ -453,4 +456,64 @@ void resetTrafficGraphPeaks(void) {
 int isTrafficGraphVisible(void) {
     if (!sharedGraphPanel) return 0;
     return [sharedGraphPanel isVisible] ? 1 : 0;
+}
+
+void setTrafficGraphOpacity(double opacity) {
+    if (opacity < 0.2) opacity = 0.2;
+    if (opacity > 1.0) opacity = 1.0;
+    currentGraphOpacity = opacity;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        createTrafficGraphPanel();
+        [sharedGraphPanel setAlphaValue:opacity];
+    });
+}
+
+void setTrafficGraphAlwaysOnTop(int alwaysOnTop) {
+    currentGraphAlwaysOnTop = (alwaysOnTop != 0);
+    dispatch_async(dispatch_get_main_queue(), ^{
+        createTrafficGraphPanel();
+        [sharedGraphPanel setLevel:(currentGraphAlwaysOnTop ? NSFloatingWindowLevel : NSNormalWindowLevel)];
+    });
+}
+
+void snapTrafficGraphWindow(int corner) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        createTrafficGraphPanel();
+        NSScreen *screen = [sharedGraphPanel screen];
+        if (!screen) screen = [NSScreen mainScreen];
+        if (!screen) return;
+
+        NSRect visible = [screen visibleFrame];
+        NSRect frame = [sharedGraphPanel frame];
+        CGFloat pad = 16.0;
+
+        CGFloat x = frame.origin.x;
+        CGFloat y = frame.origin.y;
+
+        switch (corner) {
+            case 0: // Top-Right
+                x = visible.origin.x + visible.size.width - frame.size.width - pad;
+                y = visible.origin.y + visible.size.height - frame.size.height - pad;
+                break;
+            case 1: // Bottom-Right
+                x = visible.origin.x + visible.size.width - frame.size.width - pad;
+                y = visible.origin.y + pad;
+                break;
+            case 2: // Top-Left
+                x = visible.origin.x + pad;
+                y = visible.origin.y + visible.size.height - frame.size.height - pad;
+                break;
+            case 3: // Bottom-Left
+                x = visible.origin.x + pad;
+                y = visible.origin.y + pad;
+                break;
+        }
+
+        NSRect target = NSMakeRect(x, y, frame.size.width, frame.size.height);
+        [sharedGraphPanel setFrame:target display:YES animate:YES];
+        if (![sharedGraphPanel isVisible]) {
+            [sharedGraphPanel makeKeyAndOrderFront:nil];
+            [NSApp activateIgnoringOtherApps:YES];
+        }
+    });
 }

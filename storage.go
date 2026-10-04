@@ -18,6 +18,8 @@ type AppState struct {
 	MenuBarIconMode   MenuBarIconMode `json:"menubar_icon_mode,omitempty"`
 	RefreshRate       RefreshRate     `json:"refresh_rate,omitempty"`
 	DataCapBytes      uint64          `json:"data_cap_bytes"`
+	GraphOpacity      float64         `json:"graph_opacity,omitempty"`
+	GraphAlwaysOnTop  bool            `json:"graph_always_on_top,omitempty"`
 }
 
 var stateMu sync.Mutex
@@ -77,6 +79,8 @@ func persistCurrentState() {
 		MenuBarIconMode:   getMenuBarIconMode(),
 		RefreshRate:       getRefreshRate(),
 		DataCapBytes:      getDataCap(),
+		GraphOpacity:      getGraphOpacity(),
+		GraphAlwaysOnTop:  getGraphAlwaysOnTop(),
 	}
 	_ = saveAppState(state)
 }
