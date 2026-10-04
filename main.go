@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/getlantern/systray"
-	"github.com/shirou/gopsutil/v3/net"
 )
 
 var (
@@ -59,6 +58,23 @@ func onReady() {
 
 	systray.AddSeparator()
 
+	mInterfaceMenu := systray.AddMenuItem("Network Interface", "Select network interface to monitor")
+	mAllIfaces := mInterfaceMenu.AddSubMenuItemCheckbox("All Interfaces", "Monitor all non-loopback network interfaces", true)
+
+	ifaceOptions := listInterfaceOptions()
+	type ifaceItemPair struct {
+		device string
+		item   *systray.MenuItem
+	}
+	var ifaceItems []ifaceItemPair
+
+	for _, opt := range ifaceOptions {
+		subItem := mInterfaceMenu.AddSubMenuItemCheckbox(opt.DisplayName, "Monitor "+opt.Device, false)
+		ifaceItems = append(ifaceItems, ifaceItemPair{device: opt.Device, item: subItem})
+	}
+
+	systray.AddSeparator()
+
 	mToggleGraph = systray.AddMenuItem("Show Traffic Graph", "Open a real-time bandwidth graph window")
 
 	systray.AddSeparator()
@@ -81,6 +97,33 @@ func onReady() {
 			mSessionDown.SetTitle("Session Download: 0 B")
 		}
 	}()
+
+	go func() {
+		for range mAllIfaces.ClickedCh {
+			setSelectedInterface("")
+			mAllIfaces.Check()
+			for _, p := range ifaceItems {
+				p.item.Uncheck()
+			}
+		}
+	}()
+
+	for _, p := range ifaceItems {
+		pair := p
+		go func() {
+			for range pair.item.ClickedCh {
+				setSelectedInterface(pair.device)
+				mAllIfaces.Uncheck()
+				for _, other := range ifaceItems {
+					if other.device == pair.device {
+						other.item.Check()
+					} else {
+						other.item.Uncheck()
+					}
+				}
+			}
+		}()
+	}
 
 	go func() {
 		for range mToggleGraph.ClickedCh {
@@ -118,6 +161,7 @@ func onReady() {
 func monitorTraffic() {
 	var prevSent, prevRecv uint64
 	var initialized bool
+	var lastInterface string
 	var upHistory, downHistory []uint64
 	const sparklineWidth = 10
 
@@ -125,13 +169,16 @@ func monitorTraffic() {
 	defer ticker.Stop()
 
 	for range ticker.C {
-		ioCounters, err := net.IOCounters(false)
-		if err != nil || len(ioCounters) == 0 {
-			continue
+		currentIface := getSelectedInterface()
+		if currentIface != lastInterface {
+			initialized = false
+			lastInterface = currentIface
 		}
 
-		currSent := ioCounters[0].BytesSent
-		currRecv := ioCounters[0].BytesRecv
+		currSent, currRecv, err := fetchTrafficBytes(currentIface)
+		if err != nil {
+			continue
+		}
 
 		if initialized {
 			var upBytes, downBytes uint64
