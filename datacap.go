@@ -23,6 +23,7 @@ var dataCapOptions = []DataCapOption{
 var (
 	selectedDataCapBytes atomic.Uint64
 	dataCapAlerted       atomic.Bool
+	notifyDataCap        = sendDataCapNotification
 )
 
 func getDataCap() uint64 {
@@ -41,7 +42,7 @@ func checkDataCap(totalSessionBytes uint64) bool {
 	}
 	if totalSessionBytes >= cap && !dataCapAlerted.Load() {
 		dataCapAlerted.Store(true)
-		sendDataCapNotification(totalSessionBytes, cap)
+		notifyDataCap(totalSessionBytes, cap)
 		return true
 	}
 	return false
@@ -52,6 +53,9 @@ func resetDataCapAlert() {
 }
 
 func sendDataCapNotification(currentBytes, capBytes uint64) {
+	if capBytes == 0 {
+		return
+	}
 	title := "OSX Traffic Stats: Data Alert"
 	msg := fmt.Sprintf("Session traffic reached %s (limit: %s)!", formatBytes(currentBytes), formatBytes(capBytes))
 	script := fmt.Sprintf(`display notification "%s" with title "%s" sound name "Ping"`, msg, title)
